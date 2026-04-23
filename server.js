@@ -40,6 +40,24 @@ app.use(express.json());
 // Serve the static frontend
 app.use(express.static(path.join(__dirname, 'client')));
 
+// --- Anti-Sleep Magic for Render ---
+let appUrl = null;
+app.use((req, res, next) => {
+    // Capture the live Render URL on the first request
+    if (!appUrl && req.headers.host && !req.headers.host.includes('localhost')) {
+        const protocol = req.headers['x-forwarded-proto'] || req.protocol;
+        appUrl = `${protocol}://${req.headers.host}`;
+        console.log(`[SYS] Live URL captured: ${appUrl}. Starting anti-sleep pinger.`);
+        
+        // Ping our own /api/ping endpoint every 10 minutes to stay awake
+        setInterval(() => {
+            console.log('[SYS] Sending keep-awake ping...');
+            fetch(`${appUrl}/api/ping`).catch(() => {});
+        }, 10 * 60 * 1000); // 10 minutes
+    }
+    next();
+});
+
 // CSV File Paths
 const CSV_FILE_PATH = path.join(__dirname, 'database', 'user_information.csv');
 const REVENUE_FILE_PATH = path.join(__dirname, 'database', 'platform_revenue.csv');
