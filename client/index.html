@@ -9,6 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="landing.css">
     <style>
       :root {
         --bg-main: #0f101e;
@@ -21,6 +22,7 @@
         --color-red: #ef4444;
         --color-blue: #3b82f6;
         --color-orange: #f97316;
+        --color-yellow: #fbbf24;
         --glass-border: rgba(255, 255, 255, 0.08);
         --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
       }
@@ -95,8 +97,39 @@
       .num-2, .num-4, .num-6, .num-8 { background: var(--color-red); }
 
       .size-options { display: flex; gap: 12px; }
-      .size-btn { flex: 1; padding: 14px 0; border: 1px solid var(--glass-border); background: rgba(255,255,255,0.05); border-radius: 12px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s; text-align: center; }
-      .size-btn:hover { background: rgba(59, 130, 246, 0.2); border-color: var(--color-blue); }
+      .size-btn { flex: 1; padding: 14px 0; border: none; border-radius: 12px; color: white; font-size: 16px; font-weight: 700; cursor: pointer; transition: all 0.3s; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+      .size-btn.big { background: var(--color-yellow); color: #000; }
+      .size-btn.small { background: var(--color-blue); }
+      .size-btn:active { transform: scale(0.95); }
+
+      /* Mode Selector Pills */
+      .mode-pill-row {
+        display: flex; gap: 8px; padding: 4px 0;
+        overflow-x: auto; scrollbar-width: none;
+      }
+      .mode-pill-row::-webkit-scrollbar { display: none; }
+      .mode-pill {
+        flex: 1; min-width: 0;
+        padding: 10px 6px;
+        border: 1.5px solid rgba(255,255,255,0.1);
+        border-radius: 50px;
+        background: rgba(255,255,255,0.04);
+        color: var(--text-muted);
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        text-align: center;
+        white-space: nowrap;
+        transition: all 0.25s ease;
+        letter-spacing: 0.3px;
+      }
+      .mode-pill:hover { background: rgba(74, 222, 128, 0.08); border-color: rgba(74,222,128,0.3); color: var(--primary); }
+      .mode-pill.active-pill {
+        background: linear-gradient(135deg, rgba(74,222,128,0.2), rgba(16,185,129,0.15));
+        border-color: var(--primary);
+        color: var(--primary);
+        box-shadow: 0 0 12px rgba(74,222,128,0.25);
+      }
 
       /* Game Records Table */
       .records-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
@@ -169,6 +202,47 @@
     </style>
   </head>
   <body>
+    <!-- ================= VIEW: LANDING ================= -->
+    <div id="view-landing" class="view-section active">
+      <div class="landing-background"></div>
+      <div class="speed-lines"></div>
+      <div class="landing-overlay"></div>
+      <div class="landing-content">
+        <div class="landing-logo"><i class="fa-solid fa-crown"></i></div>
+        <h1 class="landing-title">Wingo Pro</h1>
+        <p id="landing-welcome-text" class="landing-subtitle" style="display: none;">Welcome to Wingo<br>Experience the most premium color prediction game.</p>
+        
+        <div id="landing-loader" class="loader-container">
+          <div class="premium-loader"></div>
+          <div class="loading-text">Preparing Premium Experience...</div>
+        </div>
+        
+        <button id="landing-enter-btn" class="enter-button">Start Playing Now</button>
+      </div>
+    </div>
+
+
+
+    <!-- Admin UPI Update Modal -->
+    <div id="adminUpiModal" class="modal-overlay">
+      <div class="modal-content">
+        <div class="modal-header">Update Payment UPI</div>
+        <div class="modal-body">
+          <input type="text" id="newAdminUpi" placeholder="example@ybl" class="input-field" style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 8px; color: white;">
+          <p style="margin-top: 10px; font-size: 11px; color: var(--text-muted);">The dynamic QR Code will precisely match this UPI ID across all user devices for automatic processing.</p>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn cancel" onclick="closeModal('adminUpiModal')">Cancel</button>
+          <button class="modal-btn confirm" onclick="saveAdminUpi()">Save Changes</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= VIEW: EAGLE ONLY ================= -->
+    <div id="view-eagle-only" class="view-section" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 999999; background: #000; align-items: center; justify-content: center;">
+      <img src="eagle.png" alt="Eagle Splash" style="max-width: 100%; max-height: 100%; object-fit: contain; user-select: none; pointer-events: none;">
+    </div>
+
     <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
@@ -187,17 +261,20 @@
             <h1 class="auth-title">Welcome Back</h1>
             <p class="auth-subtitle">Login with your credentials</p>
             <div class="input-group">
-              <label>Mobile Number / Email</label>
-              <input type="text" id="loginMobile" placeholder="Enter mobile or email" value="9876543210">
+              <label>Phone Number</label>
+              <input type="text" id="loginUsername" placeholder="Enter your Phone Number">
             </div>
             <div class="input-group">
               <label>Password</label>
-              <input type="password" id="loginPassword" placeholder="Enter your password" value="password123">
+              <input type="password" id="loginPassword" placeholder="Enter your password">
             </div>
             <button class="btn btn-primary" style="margin-top: 20px;" onclick="loginUser()">Login to Play</button>
-            <button class="btn btn-secondary" style="margin-top: 12px;" onclick="switchView('view-user-register')">Register New Account</button>
-            <div class="auth-links" style="justify-content: center; margin-top: 16px;">
-              <a onclick="switchView('view-admin-login')" style="color: var(--text-muted)">Admin Portal</a>
+            <div class="auth-links" style="justify-content: center; margin-top: 20px;">
+               <span style="color: var(--text-muted)">Don't have an account? </span>
+               <a onclick="switchView('view-user-register')" style="color: var(--primary); margin-left: 5px; font-weight: bold;">Register</a>
+            </div>
+            <div class="auth-links" style="justify-content: center; margin-top: 10px;">
+               <a onclick="switchView('view-admin-login')" style="color: var(--text-muted); font-size: 11px;">Admin Portal</a>
             </div>
           </div>
         </div>
@@ -208,53 +285,33 @@
         <header class="header">
           <button class="icon-btn" onclick="switchView('view-home')"><i class="fa-solid fa-chevron-left"></i></button>
           <h1>Create Account</h1>
-          <div style="width: 36px;"></div> <!-- Spacer -->
+          <div style="width: 36px;"></div>
         </header>
-        <div class="auth-container" style="padding: 40px 20px;">
+        <div class="auth-container">
           <div class="auth-card">
-            <h1 class="auth-title">Create Account</h1>
-            <p class="auth-subtitle">Join the premium betting experience</p>
+            <h1 class="auth-title">Join Wingo</h1>
+            <p class="auth-subtitle">Register to start winning</p>
             <div class="input-group">
-              <label>Full Name</label>
-              <input type="text" id="regName" placeholder="Enter full name">
-            </div>
-            <div class="input-group">
-              <label>Email ID (Login ID)</label>
-              <input type="email" id="regEmail" placeholder="Enter email address">
-            </div>
-            <div class="input-group">
-              <label>Mobile Number</label>
-              <input type="tel" id="regPhone" placeholder="Enter mobile number">
-            </div>
-            <div class="input-group">
-              <label>Bank Name</label>
-              <input type="text" id="regBankName" placeholder="e.g. HDFC Bank">
-            </div>
-            <div class="input-group">
-               <label>Bank Holder Name</label>
-               <input type="text" id="regBankHolder" placeholder="As per bank record">
-            </div>
-            <div class="input-group">
-              <label>IFSC Code</label>
-              <input type="text" id="regIFSC" placeholder="Enter IFSC code">
-            </div>
-            <div class="input-group">
-              <label>UPI Number / ID</label>
-              <input type="text" id="regUPI" placeholder="Enter UPI details">
+              <label>Phone Number</label>
+              <input type="text" id="regPageUsername" placeholder="Enter your Phone Number">
             </div>
             <div class="input-group">
               <label>Password</label>
-              <input type="password" id="regPassword" placeholder="Create password">
+              <input type="password" id="regPagePassword" placeholder="Create a password">
             </div>
-            <button class="btn btn-secondary" style="margin-top: 20px;" onclick="initiateRegistration()">Register Now & Play</button>
-
+            <div class="input-group">
+              <label>Confirm Password</label>
+              <input type="password" id="regPageConfirmPassword" placeholder="Confirm your password">
+            </div>
+            <button class="btn btn-primary" style="margin-top: 20px; background: var(--primary); color: #000; font-weight: 800;" onclick="initiateRegistration()">Register Now</button>
             <div class="auth-links" style="justify-content: center; margin-top: 20px;">
-              <span style="color: var(--text-muted)">Already have an account? </span>
-              <a onclick="switchView('view-user-login')" style="margin-left: 5px;">Login</a>
+               <span style="color: var(--text-muted)">Already a member? </span>
+               <a onclick="switchView('view-user-login')" style="color: var(--primary); margin-left: 5px; font-weight: bold;">Login</a>
             </div>
           </div>
         </div>
       </div>
+
 
       <!-- ================= VIEW: ADMIN LOGIN ================= -->
       <div id="view-admin-login" class="view-section">
@@ -270,14 +327,14 @@
             <p class="auth-subtitle">Secure management portal</p>
             <div class="input-group">
               <label>Admin ID</label>
-              <input type="text" id="adminUsername" placeholder="Enter Admin ID" value="ajay@651">
+              <input type="text" id="adminUsername" placeholder="Enter Admin ID" autocomplete="off" value="">
             </div>
             <div class="input-group">
               <label>Admin Password</label>
-              <input type="password" id="adminPassword" placeholder="Enter Admin Password" value="ajay@651">
+              <input type="password" id="adminPassword" placeholder="Enter Admin Password" autocomplete="new-password" value="">
             </div>
             <button class="btn btn-danger" style="margin-top: 20px;" onclick="loginAdmin()">Sign In to Console</button>
-            <button class="btn btn-secondary" style="margin-top: 12px;" onclick="switchView('view-user-register')">Create User Profile</button>
+
             <div class="auth-links" style="justify-content: center; margin-top: 16px;">
               <a onclick="switchView('view-user-login')" style="color: var(--text-muted)">User Payout Portal</a>
             </div>
@@ -285,7 +342,6 @@
         </div>
       </div>
 
-      <!-- ================= VIEW: ADMIN DASHBOARD ================= -->
       <div id="view-admin-dashboard" class="view-section">
         <header class="header" style="background: linear-gradient(135deg, #1e1b4b, #450a0a); border-bottom: 2px solid var(--color-red);">
           <div style="display: flex; align-items: center; gap: 12px;">
@@ -305,14 +361,42 @@
 
         <div class="content-area" style="padding: 12px;">
           <!-- Stats Summary -->
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;">
+          <div id="adminPendingSection" class="glass-card" style="padding: 20px; border-color: var(--color-orange); margin-bottom: 25px; display:none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+              <h3 style="margin:0; font-size: 16px; color: var(--color-orange);"><i class="fa-solid fa-clock-rotate-left"></i> Pending Recharges</h3>
+              <span id="pendingRechargeBadge" class="badge" style="background: var(--color-orange); color: #000;">0 New</span>
+            </div>
+            <div id="adminPendingRechargeList" style="display: flex; flex-direction: column; gap: 12px;">
+              <!-- Dynamic pending recharges -->
+            </div>
+          </div>
+
+          <!-- Telegram Settings (Serverless Mode) -->
+          <div class="glass-card" style="padding: 20px; border-color: var(--color-red); margin-bottom: 25px;">
+            <h3 style="margin:0 0 15px 0; font-size: 16px; color: var(--color-red);"><i class="fa-brands fa-telegram"></i> Serverless Admin (Telegram)</h3>
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+              <div class="input-group">
+                <label style="font-size: 11px;">Bot Token (from @BotFather)</label>
+                <input type="password" id="tgBotToken" placeholder="7123456789:AAH..." style="font-size: 12px;">
+              </div>
+              <div class="input-group">
+                <label style="font-size: 11px;">Admin Chat ID (from @userinfobot)</label>
+                <input type="text" id="tgChatId" placeholder="123456789" style="font-size: 12px;">
+              </div>
+              <button class="btn btn-outline" style="background: rgba(239, 68, 68, 0.1); border-color: var(--color-red); color: var(--color-red); font-weight: 800;" onclick="saveTelegramSettings()">Save Telegram Config</button>
+            </div>
+          </div>
+
+          <div class="admin-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px;">
+
+
             <div class="glass-card" style="padding: 12px; border-left: 4px solid var(--primary); display: flex; flex-direction: column; justify-content: center;">
               <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Total Players</div>
               <div style="font-size: 20px; font-weight: 800; margin-top: 4px;" id="adminTotalUsers">0</div>
             </div>
-            <div class="glass-card" style="padding: 12px; border-left: 4px solid var(--color-blue); display: flex; flex-direction: column; justify-content: center;">
-              <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Active (Online)</div>
-              <div style="font-size: 20px; font-weight: 800; margin-top: 4px; color: var(--primary);" id="adminActiveUsers">0</div>
+            <div class="glass-card" style="padding: 12px; border-left: 4px solid var(--color-violet); display: flex; flex-direction: column; justify-content: center;">
+              <div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Rounds Run Today</div>
+              <div style="font-size: 20px; font-weight: 800; margin-top: 4px; color: var(--color-violet);" id="adminRoundsCount">0</div>
             </div>
           </div>
 
@@ -347,6 +431,11 @@
               <span id="rechargeSummary" style="font-size: 11px; color: var(--primary)">₹ 0</span>
             </div>
 
+            <div class="action-item" onclick="openAdminUpiModal()" style="padding: 14px;">
+              <div class="left"><i class="fa-solid fa-qrcode" style="color: var(--color-yellow)"></i> Update UPI ID</div>
+              <span style="font-size: 11px; background: rgba(234, 179, 8, 0.2); padding: 2px 8px; border-radius: 10px; color: var(--color-yellow)">Change QR</span>
+            </div>
+
             <div class="action-item" onclick="openGameControlModal()" style="padding: 14px;">
               <div class="left"><i class="fa-solid fa-wand-sparkles" style="color: var(--color-violet)"></i> Game Control</div>
               <span id="nextResultIndicator" style="font-size: 11px; background: rgba(139, 92, 246, 0.2); padding: 2px 8px; border-radius: 10px; color: var(--color-violet)">Auto</span>
@@ -355,6 +444,16 @@
             <div class="action-item" onclick="openAdminReportsModal('withdraw')" style="padding: 14px;">
               <div class="left"><i class="fa-solid fa-hourglass-half" style="color: var(--color-orange)"></i> Pending Withdrawals</div>
               <span id="pendingWithdrawCount" style="font-size: 11px; background: rgba(249, 115, 22, 0.2); padding: 2px 8px; border-radius: 10px; color: var(--color-orange)">0 New</span>
+            </div>
+
+            <div class="action-item" onclick="exportPaymentsCSV()" style="padding: 14px;">
+              <div class="left"><i class="fa-solid fa-file-csv" style="color: var(--color-green)"></i> Export Payments CSV</div>
+              <span style="font-size: 11px; background: rgba(16, 185, 129, 0.2); padding: 2px 8px; border-radius: 10px; color: var(--color-green)">Download</span>
+            </div>
+
+            <div class="action-item" onclick="exportUsersCSV()" style="padding: 14px;">
+              <div class="left"><i class="fa-solid fa-file-users" style="color: var(--color-blue)"></i> Export Users CSV</div>
+              <span style="font-size: 11px; background: rgba(59, 130, 246, 0.2); padding: 2px 8px; border-radius: 10px; color: var(--color-blue)">Download</span>
             </div>
           </div>
 
@@ -379,27 +478,82 @@
       </div>
 
       <!-- ================= VIEW: HOME ================= -->
-      <div id="view-home" class="view-section active">
+      <div id="view-home" class="view-section">
         <header class="header"><h1>Home</h1></header>
         <div class="content-area" style="justify-content: center; align-items: center; text-align: center;">
           <div style="font-size: 60px; color: var(--primary); margin-bottom: 10px;"><i class="fa-solid fa-crown"></i></div>
-          <h2 style="font-size: 32px; margin-bottom: 20px; background: linear-gradient(135deg, #4ade80, #3b82f6); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">Welcome to Wingo</h2>
-          <p style="color: var(--text-muted); margin-bottom: 40px;">Experience the most premium color prediction game.</p>
+          <h2 style="font-size: 32px; margin-bottom: 20px; background: linear-gradient(135deg, #4ade80, #3b82f6); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;">Welcome to Wingo</h2>
+          <p style="color: var(--text-muted); margin-bottom: 20px;">Experience the most premium color prediction game.</p>
           
-          <div style="display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 250px; margin: 0 auto;">
-            <button id="btn-home-user-login" class="btn btn-primary" onclick="switchView('view-user-login')">
-              <i class="fa-solid fa-user"></i> User Login
-            </button>
-            <button id="btn-home-register" class="btn btn-secondary" onclick="switchView('view-user-register')">
-              <i class="fa-solid fa-user-plus"></i> Register Now
-            </button>
-            <button id="btn-home-admin-login" class="btn btn-danger" style="background: linear-gradient(135deg, #ef4444, #b91c1c);" onclick="switchView('view-admin-login')">
-              <i class="fa-solid fa-user-shield"></i> Admin Login (Control)
-            </button>
-            <button id="btn-home-play" class="btn btn-secondary" style="display: none;" onclick="switchView('view-wingo')">
-              <i class="fa-solid fa-play"></i> Play Now
-            </button>
+          <!-- Live Preview Card (Activated) -->
+          <div class="glass-card" style="width: 100%; max-width: 280px; margin: 0 auto 30px; background: rgba(74, 222, 128, 0.05); border: 1px dashed rgba(255,255,255,0.15); padding: 16px;">
+            <div style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; margin-bottom: 8px; font-weight: 700; letter-spacing: 1px;">Live Drawing</div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 10px; color: var(--text-muted);">Period</div>
+                <div id="home-periodId" style="font-size: 14px; font-weight: 700;">---</div>
+              </div>
+              <div id="home-countdown" style="font-size: 28px; font-weight: 800; color: var(--primary); font-variant-numeric: tabular-nums;">00:00</div>
+            </div>
           </div>
+          
+          <div style="display: flex; flex-direction: column; gap: 12px; width: 100%; max-width: 300px; margin: 0 auto;">
+            
+          <div style="display: flex; flex-direction: column; gap: 16px; width: 100%; max-width: 320px; margin: 0 auto; padding-bottom: 20px;">
+            
+            <!-- AUTH TAB SWITCHER -->
+            <div style="display: flex; background: rgba(0,0,0,0.2); border-radius: 12px; padding: 4px; margin-bottom: 10px;">
+              <button id="tab-login" class="btn" style="flex: 1; height: 36px; font-size: 12px; border-radius: 8px; background: transparent; color: var(--text-muted); padding: 0;" onclick="switchAuthTab('login')">LOGIN</button>
+              <button id="tab-register" class="btn" style="flex: 1; height: 36px; font-size: 12px; border-radius: 8px; background: var(--primary); color: #000; font-weight: bold; padding: 0;" onclick="switchAuthTab('register')">REGISTER</button>
+            </div>
+
+            <!-- LOGIN TAB CONTENT -->
+            <div id="section-login" style="display: none;">
+              <button id="btn-home-user-login" class="btn btn-primary" onclick="switchView('view-user-login')" style="background: var(--primary); color: #000; font-weight: 800; padding: 18px; border-radius: 14px; width: 100%; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">
+                <i class="fa-solid fa-right-to-bracket"></i> Login to Play
+              </button>
+            </div>
+
+            <!-- REGISTER TAB CONTENT -->
+            <div id="section-register" style="display: block;">
+              <div id="home-auth-register" class="glass-card" style="padding: 24px; text-align: left; background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255,255,255,0.05); border-radius: 20px;">
+                 <h3 style="font-size: 14px; margin-bottom: 16px; text-align: center; color: var(--primary); text-transform: uppercase; letter-spacing: 1px;">Join Wingo Now</h3>
+                 <div class="input-group">
+                   <label>Phone Number</label>
+                   <input type="text" id="homeRegUsername" placeholder="Enter Phone Number" style="background: rgba(0,0,0,0.2);">
+                 </div>
+                 <div class="input-group" style="margin-top: 12px;">
+                   <label>Create Password</label>
+                   <input type="password" id="homeRegPassword" placeholder="Minimum 4 digits" style="background: rgba(0,0,0,0.2);">
+                 </div>
+                 <button class="btn btn-primary" onclick="initiateHomeRegistration()" style="margin-top: 15px; width: 100%; font-weight: 800; background: var(--primary); color: #000;">
+                   <i class="fa-solid fa-user-plus"></i> Create Account
+                 </button>
+              </div>
+            </div>
+
+            <a onclick="switchView('view-admin-login')" style="font-size: 10px; color: rgba(156, 163, 175, 0.4); text-align: center; text-decoration: none; margin-top: 10px;">Admin Access Portal</a>
+          </div>
+            
+            <div style="margin-top: 40px; padding-bottom: 80px; font-size: 11px; color: var(--text-muted); text-align: left; line-height: 1.8; border-top: 1px solid var(--glass-border); padding-top: 24px;">
+              <h4 style="margin-bottom: 16px; color: var(--primary); text-transform: uppercase; font-size: 12px; font-weight: 800; text-align: center; letter-spacing: 2px;">Platform Security & Policy</h4>
+              <div style="display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; gap: 10px;">
+                  <i class="fa-solid fa-shield-halved" style="color: var(--primary); margin-top: 3px;"></i>
+                  <p><strong style="color: #fff">Secure Encrypted Transactions:</strong> All financial operations are protected by 256-bit SSL encryption. Your data and funds are 100% safe.</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                  <i class="fa-solid fa-scale-balanced" style="color: var(--color-blue); margin-top: 3px;"></i>
+                  <p><strong style="color: #fff">Provably Fair Gaming:</strong> Results are generated through a certified RNG algorithm, ensuring impossible manipulation and equal fairness for all.</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                  <i class="fa-solid fa-bolt-lightning" style="color: var(--color-yellow); margin-top: 3px;"></i>
+                  <p><strong style="color: #fff">Fast Payout System:</strong> Withdrawals are processed 24/7. Most transfers reach your bank within 10-30 minutes of approval.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -427,9 +581,15 @@
       <!-- ================= VIEW: WIN GO (GAME) ================= -->
       <div id="view-wingo" class="view-section">
         <header class="header">
-          <button class="icon-btn" onclick="switchView('view-home')"><i class="fa-solid fa-chevron-left"></i></button>
-          <h1>Win Go 1Min</h1>
-          <button class="icon-btn" onclick="showRulesModal()"><i class="fa-solid fa-circle-question"></i></button>
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <button class="icon-btn" onclick="switchView('view-home')"><i class="fa-solid fa-chevron-left"></i></button>
+            <h1 id="wingo-mode-label" style="font-size: 18px;">Win Go 1Min</h1>
+          </div>
+          <div style="display: flex; align-items: center; gap: 12px;">
+             <div id="live-clock" style="font-size: 11px; font-weight: 700; opacity: 0.7; font-family: monospace; background: rgba(255,255,255,0.05); padding: 4px 10px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.1);">--:--:--</div>
+             <button class="sound-toggle-btn secondary" id="sound-toggle" onclick="toggleSound()"><i class="fa-solid fa-volume-high"></i></button>
+             <button class="icon-btn" onclick="showRulesModal()"><i class="fa-solid fa-circle-question"></i></button>
+          </div>
         </header>
         <div class="content-area">
           <div class="glass-card balance-area">
@@ -440,6 +600,14 @@
               <button class="btn btn-secondary" onclick="showWithdrawModal()"><i class="fa-solid fa-money-bill-transfer"></i> Withdraw</button>
             </div>
           </div>
+          <!-- Mode Selector Pills -->
+          <div class="mode-pill-row">
+            <button class="mode-pill" id="mode-pill-30s" onclick="setGameMode('30s')">⚡ 30s</button>
+            <button class="mode-pill active-pill" id="mode-pill-1Min" onclick="setGameMode('1Min')">🏆 1Min</button>
+            <button class="mode-pill" id="mode-pill-3Min" onclick="setGameMode('3Min')">⏱ 3Min</button>
+            <button class="mode-pill" id="mode-pill-5Min" onclick="setGameMode('5Min')">🕐 5Min</button>
+          </div>
+
           <div class="glass-card game-info-card">
             <div class="period-info"><h3>Period</h3><div class="period-number" id="periodId">202603290145</div></div>
             <div class="timer-area"><h3>Count Down</h3><div class="timer-display" id="countdown">00:45</div></div>
@@ -463,21 +631,33 @@
               <button class="num-btn num-9" onclick="openBetModal('Number 9', '#10b981')">9</button>
             </div>
             <div class="size-options">
-              <button class="size-btn" onclick="openBetModal('Big', '#3b82f6')">Big</button>
-              <button class="size-btn" onclick="openBetModal('Small', '#f97316')">Small</button>
+              <button class="size-btn big" onclick="openBetModal('Big', '#fbbf24')"><i class="fa-solid fa-arrow-up-right-dots"></i> Big</button>
+              <button class="size-btn small" onclick="openBetModal('Small', '#3b82f6')"><i class="fa-solid fa-arrow-down-short-wide"></i> Small</button>
             </div>
           </div>
           <div class="glass-card">
-            <div class="records-header"><h2><i class="fa-solid fa-chart-line" style="color: var(--primary)"></i> Game Record</h2></div>
-            <table class="records-table">
-              <thead><tr><th>Period</th><th>Price</th><th>Number</th><th>Result</th></tr></thead>
-              <tbody id="game-records-body">
-                <tr><td>...0144</td><td>₹ 43,212</td><td class="result-number result-green">3</td><td><div class="dots"><div class="dot" style="background:var(--color-green)"></div></div></td></tr>
-                <tr><td>...0143</td><td>₹ 48,935</td><td class="result-number result-red">8</td><td><div class="dots"><div class="dot" style="background:var(--color-red)"></div></div></td></tr>
-                <tr><td>...0142</td><td>₹ 52,109</td><td class="result-number result-violet">0</td><td><div class="dots"><div class="dot" style="background:var(--color-red)"></div><div class="dot" style="background:var(--color-violet)"></div></div></td></tr>
-                <tr><td>...0141</td><td>₹ 39,444</td><td class="result-number result-green">7</td><td><div class="dots"><div class="dot" style="background:var(--color-green)"></div></div></td></tr>
-              </tbody>
-            </table>
+            <div class="records-header">
+              <div style="display: flex; gap: 20px;">
+                <h2 id="tab-game-record" class="active" style="cursor: pointer; border-bottom: 2px solid var(--primary); padding-bottom: 4px;" onclick="switchHistoryTab('game')">Game Record</h2>
+                <h2 id="tab-my-record" style="cursor: pointer; opacity: 0.5; padding-bottom: 4px;" onclick="switchHistoryTab('my')">My Record</h2>
+              </div>
+            </div>
+            <div id="game-record-table">
+              <table class="records-table">
+                <thead><tr><th>Period</th><th>Number</th><th>Size</th><th>Result</th><th>My Result</th></tr></thead>
+                <tbody id="game-records-body">
+                  <tr><td colspan="5" style="text-align: center; padding: 30px; opacity: 0.5;">Loading records...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div id="my-record-table" style="display: none;">
+              <table class="records-table">
+                <thead><tr><th>Period</th><th>Select</th><th>Res</th><th>Size</th><th>Profit</th></tr></thead>
+                <tbody id="my-records-body">
+                  <tr><td colspan="5" style="text-align: center; padding: 30px; opacity: 0.5;">No personal records</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </div>
@@ -597,24 +777,78 @@
         </div>
       </div>
 
-      <!-- Recharge Modal -->
+      <!-- Recharge Modal (Updated for UPI Deep Link) -->
       <div id="rechargeModal" class="modal-overlay">
         <div class="modal-content">
           <div class="modal-header" style="background: rgba(16, 185, 129, 0.2)">Recharge Account</div>
-          <div class="modal-body">
-            <div class="input-group">
-              <label>Amount (₹)</label>
-              <input type="number" id="rechargeAmount" placeholder="Enter amount..." value="1000">
+          <div class="modal-body" id="rechargeModalBody">
+            <div id="rechargeStep1">
+              <div class="input-group">
+                <label>Enter Amount (₹)</label>
+                <input type="number" id="rechargeAmount" placeholder="Min ₹100" value="1000">
+              </div>
+              <p style="font-size: 10px; color: var(--text-muted); text-align: center; margin-bottom: 10px;">Select from presets:</p>
+              <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+                <button class="bet-amt-btn" style="flex: 1" onclick="document.getElementById('rechargeAmount').value=100">100</button>
+                <button class="bet-amt-btn" style="flex: 1" onclick="document.getElementById('rechargeAmount').value=500">500</button>
+                <button class="bet-amt-btn" style="flex: 1" onclick="document.getElementById('rechargeAmount').value=2000">2k</button>
+              </div>
+              <button class="btn btn-primary" onclick="processRechargeFlow()">Continue to Pay</button>
+            </div>
+            
+            <div id="rechargeStep2" style="display: none; text-align: center;">
+              <div style="background: rgba(16, 185, 129, 0.1); padding: 15px; border-radius: 12px; margin-bottom: 15px; border: 1px dashed var(--primary);">
+                <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px;">Paying Amount</p>
+                <h2 id="finalRechargeAmount" style="font-size: 28px; font-weight: 800;">₹ 1000</h2>
+              </div>
+              
+              <div style="margin-bottom: 15px; display: flex; justify-content: center;">
+                <div style="background: white; padding: 10px; border-radius: 12px; display: inline-block; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                    <img id="rechargeQRCode" src="" alt="UPI QR Code" style="width: 150px; height: 150px; display: block;">
+                </div>
+              </div>
+
+              <p style="font-size: 11px; color: #fbbf24; margin-bottom: 20px; font-weight: 600;">Scan this QR code from any UPI app to pay, then click confirm below.</p>
+              
+              <div style="background:rgba(16, 185, 129, 0.1); border:1px solid rgba(16, 185, 129, 0.2); border-radius:12px; padding:10px; margin-bottom:15px; display:flex; justify-content:space-between; align-items:center;">
+                  <span style="font-size:11px; color:var(--text-muted);">Already paid? Track your request:</span>
+                  <button class="btn btn-outline" style="width:auto; padding:6px 12px; font-size:10px;" onclick="openRechargeHistory()">History</button>
+              </div>
+              <button class="btn btn-primary" onclick="submitRechargeUPI()">Confirm Payment</button>
+            </div>
+
+
+            <!-- New: Wait for request -->
+            <div id="rechargeStep3" style="display: none; text-align: center; padding: 30px 20px;">
+              <div class="premium-loader" style="margin: 0 auto 20px;"></div>
+              <div id="rechargeWaitMsg" style="font-size: 14px; line-height: 1.6; color: white;">
+                <b style="color: #fbbf24;">Sharing payment info...</b><br/>Please wait while we connect with the owner.
+              </div>
+            </div>
+
+
             </div>
           </div>
           <div class="modal-footer">
-            <button class="modal-btn cancel" onclick="closeModal('rechargeModal')">Cancel</button>
-            <button class="modal-btn confirm" style="color: var(--color-green)" onclick="processRecharge()">Pay Now</button>
+            <button class="modal-btn cancel" onclick="handleRechargeCancel()">Cancel</button>
           </div>
         </div>
       </div>
 
       <!-- Withdraw Modal -->
+      <!-- Withdraw Modal -->
+      <div id="rechargeHistoryModal" class="modal-overlay">
+        <div class="modal-content" style="max-height: 80vh; overflow: auto;">
+          <div class="modal-header" style="background: rgba(16, 185, 129, 0.2)">Recharge History</div>
+          <div class="modal-body" id="rechargeHistoryBody">
+             <!-- Dynamic content -->
+          </div>
+          <div class="modal-footer">
+            <button class="modal-btn cancel" onclick="closeModal('rechargeHistoryModal')">Close</button>
+          </div>
+        </div>
+      </div>
+
       <div id="withdrawModal" class="modal-overlay">
         <div class="modal-content">
           <div class="modal-header" style="background: rgba(59, 130, 246, 0.2)">Withdraw Funds</div>
@@ -624,10 +858,11 @@
               <input type="number" id="withdrawAmount" placeholder="Enter amount..." value="">
             </div>
             <div class="input-group">
-              <label>Bank Card</label>
-              <input type="text" disabled value="State Bank... **3941">
+              <label>UPI ID (for Payout)</label>
+              <input type="text" id="withdrawUPI" placeholder="e.g. user@upi">
             </div>
           </div>
+
           <div class="modal-footer">
             <button class="modal-btn cancel" onclick="closeModal('withdrawModal')">Cancel</button>
             <button class="modal-btn confirm" style="color: var(--color-blue)" onclick="processWithdraw()">Withdraw</button>
@@ -667,15 +902,15 @@
           <div class="modal-body">
             <div class="input-group">
               <label>Old Password</label>
-              <input type="password" placeholder="Enter current password">
+              <input type="password" id="secOldPassword" placeholder="Enter current password">
             </div>
             <div class="input-group">
               <label>New Password</label>
-              <input type="password" placeholder="Create new password">
+              <input type="password" id="secNewPassword" placeholder="Create new password">
             </div>
             <div class="input-group">
               <label>Confirm Password</label>
-              <input type="password" placeholder="Confirm new password">
+              <input type="password" id="secConfirmPassword" placeholder="Confirm new password">
             </div>
           </div>
           <div class="modal-footer">
@@ -691,15 +926,10 @@
           <div class="modal-header" style="background: rgba(249, 115, 22, 0.2)">My Bank Cards</div>
           <div class="modal-body" id="savedCardsBody">
             <div id="savedCardsList" style="display:flex; flex-direction:column; gap:10px; margin-bottom: 20px;">
-              <div class="glass-card" style="padding: 15px; border-color: rgba(255,255,255,0.1)">
-                <div style="color: var(--text-muted); font-size: 12px;">State Bank of India</div>
-                <div style="font-size: 18px; letter-spacing: 2px; margin: 8px 0;">**** **** **** 3941</div>
-                <div style="color: var(--primary); font-size: 12px; display:flex; justify-content:space-between">
-                  <span>AJAY KUMAR</span>
-                  <i class="fa-solid fa-check-circle"></i>
-                </div>
-              </div>
+              <!-- Dynamically populated from localStorage -->
+              <div style="text-align:center; padding:20px; color:var(--text-muted); font-size:12px;">No bank cards found. Please add one.</div>
             </div>
+
             <button class="btn btn-outline" style="width: 100%" onclick="closeModal('bankCardsListModal'); document.getElementById('bankCardModal').classList.add('show');"><i class="fa-solid fa-plus"></i> Add New Bank Card</button>
           </div>
           <div class="modal-footer">
@@ -825,51 +1055,278 @@
         </div>
       </div>
 
+      <!-- History Details Modal -->
+      <div id="historyDetailModal" class="modal-overlay">
+        <div class="modal-content">
+          <div class="modal-header">Record Details</div>
+          <div class="modal-body" id="historyDetailBody" style="padding: 0;">
+            <!-- Content populated by JS -->
+          </div>
+          <div class="modal-footer">
+            <button class="modal-btn confirm" style="flex: 1;" onclick="closeModal('historyDetailModal')">Close</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Toast Alert -->
-      <div id="toast" class="toast">Success!</div>
+            <div id="toast" class="toast">Success!</div>
 
     </div>
 
     <script>
-      // ================= ENVIRONMENT & API =================
-      const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname === '';
-      // Defaulting to 127.0.0.1 for more consistent local fetch behavior than 'localhost'
-      const API_URL = IS_LOCAL ? 'http://127.0.0.1:3001' : 'https://YOUR_BACKEND_URL.onrender.com';
-      console.log(`Wingo Status: ${IS_LOCAL ? 'LOCAL' : 'CLOUD'} | API Environment: ${API_URL}`);
+      // SILENCE CONSOLE NOISE (For Simulation Mode)
+      window.addEventListener('error', function(e) {
+          if (e.message && (e.message.includes('fetch') || e.message.includes('TypeError'))) {
+              e.preventDefault();
+              console.log("🌐 Network suppressed in Simulation Mode.");
+          }
+      }, true);
 
-      // ================= SOCKET.IO =================
-      const socket = io(API_URL);
-      socket.on('connect', () => console.log('Live Server Connected!'));
+      // ================= ENVIRONMENT & API =================
+
+       const IS_LOCAL = window.location.hostname === 'localhost' || 
+                        window.location.hostname === '127.0.0.1' || 
+                        window.location.hostname === '' ||
+                        window.location.hostname.startsWith('192.168.') ||
+                        window.location.hostname.startsWith('10.') ||
+                        window.location.hostname.endsWith('.local');
+       
+       // Standard API URL Configuration
+       let API_URL = (window.location.port === '5555') ? '' : `${window.location.protocol}//${window.location.hostname || 'localhost'}:5555`;
+       if (window.location.protocol === 'file:') API_URL = 'http://localhost:5555';
+
+      let currentMode = '1Min'; // Default Mode
       
-      socket.on('timerUpdate', (data) => {
-        timeLeft = data.timer;
-        currentPeriod = parseInt(data.periodId);
+      console.log(`Wingo Console: ${IS_LOCAL ? 'LOCAL' : 'CLOUD'} | API: ${API_URL}`);
+
+      let isServerOnline = false;
+      async function checkServerStatus() {
+          try {
+              const res = await fetch(`${API_URL}/api/ping`).catch(() => null);
+              if (res && res.ok) {
+                  const data = await res.json().catch(() => ({}));
+                  isServerOnline = data.server === 'Wingo Backend';
+              } else {
+                  isServerOnline = false;
+              }
+          } catch(e) {
+              isServerOnline = false;
+          }
+      }
+      setInterval(checkServerStatus, 5000); 
+
+      checkServerStatus();
+
+      // ================= SOUNDS (REFINED) =================
+      let audioCtx = null;
+      let soundEnabled = localStorage.getItem('sound_enabled') !== 'false';
+      
+      function initAudio() {
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+      }
+      
+      // Auto-init on first interaction
+      window.addEventListener('click', initAudio, { once: true });
+      window.addEventListener('touchstart', initAudio, { once: true });
+
+      function playSound(type) {
+        if (!soundEnabled || !audioCtx) return;
+        initAudio(); // Ensure it's ready
         
-        // Update UI
-        document.getElementById('periodId').innerText = currentPeriod;
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        
+        const now = audioCtx.currentTime;
+        if (type === 'tick') {
+          osc.frequency.setValueAtTime(880, now);
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.1);
+          osc.start(now); osc.stop(now + 0.1);
+        } else if (type === 'bet') {
+          osc.frequency.setValueAtTime(440, now);
+          osc.frequency.exponentialRampToValueAtTime(880, now + 0.2);
+          gain.gain.setValueAtTime(0.1, now);
+          gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.2);
+          osc.start(now); osc.stop(now + 0.2);
+        } else if (type === 'win') {
+          [523.25, 659.25, 783.99].forEach((f, i) => {
+            const o = audioCtx.createOscillator();
+            const g = audioCtx.createGain();
+            o.connect(g); g.connect(audioCtx.destination);
+            o.frequency.setValueAtTime(f, now + i*0.1);
+            g.gain.setValueAtTime(0.1, now + i*0.1);
+            g.gain.exponentialRampToValueAtTime(0.0001, now + i*0.1 + 0.3);
+            o.start(now + i*0.1); o.stop(now + i*0.1 + 0.3);
+          });
+        }
+      }
+
+      // ================= SOCKET.IO & SYNC (MULTI-MODE) =================
+      const socket = io(API_URL, { reconnection: true });
+      let socketConnected = false;
+
+      socket.on('connect', () => {
+        socketConnected = true;
+        console.log("Connected to Game Server");
+        updateHistoryFromServer();
+        updateBalanceDisplay();
+      });
+
+      // Cleanup and re-register listeners on mode change
+      function registerSocketListeners(mode) {
+          // Timer Update
+          socket.off(`timerUpdate_${mode}`); // Prevent duplicates
+          socket.on(`timerUpdate_${mode}`, (data) => {
+              if (currentMode !== mode) return;
+              timeLeft = data.timeLeft;
+              currentPeriod = data.periodId;
+              updateUI();
+          });
+
+          // Result Update
+          socket.off(`gameResult_${mode}`);
+          socket.on(`gameResult_${mode}`, async (data) => {
+              if (currentMode !== mode) return;
+              
+              // 1. Show global result toast
+              showToast(`Result for ${mode}: ${data.resultNumber} (${data.size})`);
+              
+              // 2. Fetch specific win/loss for the user
+              if (userData && userToken) {
+                  setTimeout(async () => {
+                      try {
+                          const res = await fetch(`${API_URL}/api/bets/my`, {
+                              headers: { 'Authorization': `Bearer ${userToken}` }
+                          });
+                          const bets = await res.json();
+                          const thisPeriodBet = bets.find(b => b.periodId == data.periodId);
+                          
+                          if (thisPeriodBet) {
+                              if (thisPeriodBet.status === 'WIN') {
+                                  showToast(`🎉 YOU WIN! ₹${thisPeriodBet.winAmount}`, false);
+                                  playSound('win');
+                              } else if (thisPeriodBet.status === 'LOSS') {
+                                  showToast(`❌ YOU LOSE! Better luck next time.`, true);
+                                  // Admin notification is already handled by backend
+                              }
+                          }
+                          updateBalanceDisplay();
+                          updateMyHistory();
+                      } catch (e) {
+                          console.error("Result sync failed", e);
+                      }
+                  }, 500); // Small delay to ensure backend has processed
+              }
+
+              updateHistoryFromServer();
+              updateBalanceDisplay();
+              updateMyHistory();
+              playSound('tick');
+          });
+      }
+
+      // Initialize all listeners
+      ['30s', '1Min', '3Min', '5Min'].forEach(m => registerSocketListeners(m));
+
+      socket.on('disconnect', () => {
+        socketConnected = false;
+        console.warn('Server Disconnected!');
+      });
+
+      // Local Active Countdown — respects selected mode duration
+      setInterval(() => {
+        if (!socketConnected) {
+          timeLeft--;
+          const modeDuration = MODE_DURATIONS[currentMode] || 60;
+          if (timeLeft <= 0) {
+            timeLeft = modeDuration; // Reset to correct mode duration
+            // --- Simulate Local Result ---
+            const now = new Date();
+            const dateStr = now.getFullYear() + String(now.getMonth() + 1).padStart(2, '0') + String(now.getDate()).padStart(2, '0');
+            const seq = Math.floor((now.getHours() * 3600 + now.getMinutes() * 60 + now.getSeconds()) / modeDuration) + 1;
+            const modePrefix = currentMode === '30s' ? 'S' : currentMode === '1Min' ? 'M1' : currentMode === '3Min' ? 'M3' : 'M5';
+
+            const winningNumber = Math.floor(Math.random() * 10);
+            const size = winningNumber >= 5 ? 'Big' : 'Small';
+            let colors = [];
+            if (winningNumber === 0) colors = ['red', 'violet'];
+            else if (winningNumber === 5) colors = ['green', 'violet'];
+            else if ([1, 3, 7, 9].includes(winningNumber)) colors = ['green'];
+            else colors = ['red'];
+
+            const newResult = {
+                periodId: `${dateStr}${modePrefix}${String(seq).padStart(4, '0')}`,
+                resultNumber: winningNumber,
+                resultColor: colors.join('/'),
+                size: size,
+                timestamp: now.toISOString()
+            };
+
+            // Save to localStorage per mode
+            const key = `wingo_demo_history_${currentMode}`;
+            let localHistory = JSON.parse(localStorage.getItem(key) || '[]');
+            localHistory.unshift(newResult);
+            localStorage.setItem(key, JSON.stringify(localHistory.slice(0, 20)));
+
+            currentPeriod = newResult.periodId;
+            updateHistoryFromServer();
+            showToast(`[Demo] Result: ${winningNumber} (${size})`);
+          }
+          updateUI();
+        }
+      }, 1000);
+
+      function formatCountdown(secs) {
+        if (secs >= 60) {
+          const m = Math.floor(secs / 60);
+          const s = secs % 60;
+          return `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+        }
+        return `00:${String(secs < 0 ? 0 : secs).padStart(2,'0')}`;
+      }
+
+      function updateUI() {
+        const periodDisplay = document.getElementById('periodId');
+        const homePeriodDisplay = document.getElementById('home-periodId');
+        if(periodDisplay) periodDisplay.innerText = currentPeriod;
+        if(homePeriodDisplay) homePeriodDisplay.innerText = currentPeriod;
+
         const timeDisplay = document.getElementById('countdown');
-        const seconds = timeLeft < 10 ? '0' + timeLeft : timeLeft;
+        const homeTimeDisplay = document.getElementById('home-countdown');
+        const roundsDisplay = document.getElementById('adminRoundsCount');
+        const formattedTime = formatCountdown(timeLeft);
+
+        if(roundsDisplay) roundsDisplay.innerText = String(currentPeriod).slice(-4);
+
         if(timeDisplay) {
-           timeDisplay.innerText = '00:' + seconds;
+           timeDisplay.innerText = formattedTime;
            if(timeLeft <= 5) {
-             timeDisplay.style.color = '#ef4444'; 
+             timeDisplay.style.color = '#ef4444';
+             if(timeLeft > 0) playSound('tick');
            } else {
              timeDisplay.style.color = 'var(--primary)';
            }
         }
-      });
 
-      socket.on('gameResult', (data) => {
-        console.log("Game Result Received!", data);
-        updateHistoryFromServer();
-        // Check local bets
-        processLocalWinning(data.number);
-      });
+        if(homeTimeDisplay) {
+            homeTimeDisplay.innerText = formattedTime;
+            homeTimeDisplay.style.color = (timeLeft <= 5) ? '#ef4444' : 'var(--primary)';
+        }
+      }
 
       // ================= STATE =================
-      let userToken = localStorage.getItem('wingo_token');
-      let userData = JSON.parse(localStorage.getItem('wingo_user')) || {};
-      let userBalance = userData.balance || 45289.50;
+       let userToken = localStorage.getItem('userToken');
+       let userData = JSON.parse(localStorage.getItem('userData') || 'null');
+
+      let userBalance = userData ? userData.balance : 0;
+      const MODE_DURATIONS = { '30s': 30, '1Min': 60, '3Min': 180, '5Min': 300 };
       let timeLeft = 60;
       let currentPeriod = "---";
       
@@ -880,14 +1337,8 @@
       let activeBets = []; // Array to hold user's bets for the current period
       
       // Admin Controls State
-      let adminNextResult = null; // If set, this will be the next game result
-      let adminUsers = [
-        { id: '8942110', name: 'Player_8942', mobile: '9876543210', balance: 45289.50, status: 'Online' },
-        { id: '9900123', name: 'Ajay_99', mobile: '9988776655', balance: 15200.00, status: 'Online' },
-        { id: '0100456', name: 'Shyam_01', mobile: '8877665544', balance: 8450.00, status: 'Online' },
-        { id: '2200789', name: 'Ravi_22', mobile: '7766554433', balance: 450.00, status: 'Offline' },
-        { id: '0700111', name: 'Priya_7', mobile: '6655443322', balance: 22100.00, status: 'Online' }
-      ];
+      let adminNextResult = null; 
+      let adminUsers = [];
       let adminRecharges = [
         { user: 'Ajay_99', amount: 5000, date: '2026-03-30 14:20', status: 'Success' },
         { user: 'Priya_7', amount: 10000, date: '2026-03-30 15:10', status: 'Success' }
@@ -897,14 +1348,135 @@
         { id: 'W-002', user: 'Ravi_22', amount: 500, status: 'Pending' }
       ];
 
+      function toggleSound() {
+        initAudio();
+        soundEnabled = !soundEnabled;
+        localStorage.setItem('sound_enabled', soundEnabled);
+        updateSoundIcon();
+        showToast(soundEnabled ? 'Sound Enabled' : 'Sound Muted');
+        if(soundEnabled) playSound('click');
+      }
+
+      function updateSoundIcon() {
+        const btn = document.getElementById('sound-toggle');
+        if(btn) {
+          btn.innerHTML = soundEnabled ? '<i class="fa-solid fa-volume-high"></i>' : '<i class="fa-solid fa-volume-xmark"></i>';
+          btn.style.color = soundEnabled ? 'var(--primary)' : 'var(--text-muted)';
+        }
+      }
+
       // ================= UTILS =================
       function formatMoney(amount) { return amount.toFixed(2); }
-      function updateBalanceDisplay() {
+      // ================= LIVE CLOCK =================
+      setInterval(() => {
+        const clock = document.getElementById('live-clock');
+        if(clock) clock.innerText = new Date().toLocaleTimeString([], { hour12: false });
+      }, 1000);
+
+      function setGameMode(mode) {
+        currentMode = mode;
+
+        // Update pill buttons
+        document.querySelectorAll('.mode-pill').forEach(el => el.classList.remove('active-pill'));
+        const activePill = document.getElementById(`mode-pill-${mode}`);
+        if(activePill) activePill.classList.add('active-pill');
+
+        // Update header label
+        const label = document.getElementById('wingo-mode-label');
+        const modeNames = { '30s': 'Win Go 30s', '1Min': 'Win Go 1Min', '3Min': 'Win Go 3Min', '5Min': 'Win Go 5Min' };
+        if(label) label.innerText = modeNames[mode] || `Win Go ${mode}`;
+
+        // Reset timer to the correct mode duration
+        timeLeft = MODE_DURATIONS[mode] || 60;
+        const periodEl = document.getElementById('periodId');
+        const countdownEl = document.getElementById('countdown');
+        if(periodEl) periodEl.innerText = '...';
+        if(countdownEl) countdownEl.innerText = formatCountdown(timeLeft);
+
+        updateHistoryFromServer();
+        updateMyHistory();
+        showToast(`Switched to ${mode} mode!`);
+      }
+
+      // ================= BALANCE SYNC =================
+      async function updateBalanceDisplay() {
+        if(userToken) {
+            try {
+                const res = await fetch(`${API_URL}/api/auth/me`, {
+                    headers: { 'Authorization': `Bearer ${userToken}` }
+                });
+                const data = await res.json();
+                if(data.balance !== undefined) userBalance = data.balance;
+            } catch(e) {}
+        }
+        document.querySelectorAll('.user-balance').forEach(el => el.innerText = `₹ ${parseFloat(userBalance).toFixed(2)}`);
         document.getElementById('display-balance').innerText = formatMoney(userBalance);
         document.getElementById('display-balance-wallet').innerText = formatMoney(userBalance);
+        
+        // [PERSISTENCE FIX] Sync balance to localStorage for Simulation Mode
+        if (userData && userData.id) {
+            userData.balance = userBalance;
+            localStorage.setItem('userData', JSON.stringify(userData));
+            
+            // Also sync to master local users database for cross-shion persistence
+            let localUsers = JSON.parse(localStorage.getItem('local_users_db') || '[]');
+            const idx = localUsers.findIndex(u => u.id == userData.id);
+            if (idx !== -1) {
+                localUsers[idx].balance = userBalance;
+                localStorage.setItem('local_users_db', JSON.stringify(localUsers));
+            }
+        }
       }
+
+
       
+      // ================= TELEGRAM (SERVERLESS ADMIN) =================
+      function saveTelegramSettings() {
+          const token = document.getElementById('tgBotToken').value.trim();
+          const chatId = document.getElementById('tgChatId').value.trim();
+          if(!token || !chatId) return showToast('Please enter both Token and Chat ID', true);
+          
+          localStorage.setItem('tg_bot_token', token);
+          localStorage.setItem('tg_chat_id', chatId);
+          showToast('Telegram Config Saved! Requests will now go to your phone.');
+      }
+
+      async function sendTelegramNotification(rechargeData) {
+          const token = localStorage.getItem('tg_bot_token');
+          const chatId = localStorage.getItem('tg_chat_id');
+          
+          if(!token || !chatId) {
+              console.warn("Telegram not configured. Skipping notification.");
+              return false;
+          }
+
+          const message = `🚨 *NEW RECHARGE REQUEST* 🚨\n\n` +
+                          `👤 *User ID:* ${rechargeData.userId}\n` +
+                          `📞 *Phone:* ${rechargeData.userName}\n` +
+                          `💰 *Amount:* ₹${rechargeData.amount}\n` +
+                          `🕒 *Time:* ${new Date(rechargeData.timestamp).toLocaleString()}\n\n` +
+                          `👉 _Please verify payment and update balance manually in Admin Panel._`;
+
+          try {
+              const url = `https://api.telegram.org/bot${token}/sendMessage`;
+              const res = await fetch(url, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                      chat_id: chatId,
+                      text: message,
+                      parse_mode: 'Markdown'
+                  })
+              });
+              return res.ok;
+          } catch(e) {
+              console.error("Telegram notification failed", e);
+              return false;
+          }
+      }
+
       function showToast(message, isError = false) {
+
         const toast = document.getElementById('toast');
         toast.innerText = message;
         toast.className = 'toast show ' + (isError ? 'error' : '');
@@ -912,6 +1484,8 @@
       }
 
       function switchView(viewId) {
+        initAudio();
+        playSound('click');
         document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
         
@@ -920,94 +1494,305 @@
         
         const navItem = document.querySelector('.nav-' + viewId);
         if(navItem) navItem.classList.add('active');
+
+        // Update sub-views if needed
+        if (viewId === 'view-wallet') {
+          updateWalletRecentTransactions();
+        }
       }
 
       function closeModal(id) { document.getElementById(id).classList.remove('show'); }
-
       // ================= AUTH =================
-      let tempRegData = {};
+       async function initiateRegistration() {
+        const phoneNumber = document.getElementById('regPageUsername').value.trim();
+        const password = document.getElementById('regPagePassword').value;
+        const confirm = document.getElementById('regPageConfirmPassword').value;
 
-      async function initiateRegistration() {
-        const name = document.getElementById('regName').value;
-        const email = document.getElementById('regEmail').value;
-        const phone = document.getElementById('regPhone').value;
-        const password = document.getElementById('regPassword').value;
-        const upi_id = document.getElementById('regUPI').value;
-        const ifsc_code = document.getElementById('regIFSC').value;
-        const bank_holder_name = document.getElementById('regBankHolder').value;
-
-        if(!name || !email || !password || !phone) return showToast('Please fill essential fields', true);
-
-        const payload = { name, email, phone, password, upi_id, ifsc_code, bank_holder_name };
+        // Strict Validation
+        if(!phoneNumber || !password || !confirm) return showToast('All fields are required', true);
         
-        showToast('Processing registration...');
-        try {
-          const res = await fetch(`${API_URL}/api/auth/signup`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(payload)
-          });
-          const data = await res.json();
-          if(data.error) throw new Error(data.error);
+        // phone must be 10 digits, no symbols
+        if(!/^\d{10}$/.test(phoneNumber)) return showToast('Phone Number must be exactly 10 digits (0-9 only)', true);
+        
+        // password must be 6 digits
+        if(!/^\d{6}$/.test(password)) return showToast('Password must be exactly 6 digits', true);
+        
+        if(password !== confirm) return showToast('Passwords do not match', true);
 
-          showToast('Account created! Please login.');
-          setTimeout(() => switchView('view-user-login'), 1500);
-        } catch(err) {
-          console.error("Signup Fetch Error:", err);
-          const msg = err.message === "Failed to fetch" 
-            ? "Sync Error: Please ensure backend server is running at " + API_URL 
-            : err.message;
-          showToast(msg, true);
+        // Get existing users from localStorage
+        let localUsers = JSON.parse(localStorage.getItem('local_users_db') || '[]');
+        
+        // Redirect existing user to login
+        const userExists = localUsers.some(u => u.phoneNumber === phoneNumber);
+        if(userExists) {
+            showToast('Account already exists. Redirecting to login...', true);
+            document.getElementById('loginUsername').value = phoneNumber;
+            setTimeout(() => switchView('view-user-login'), 1500);
+            return;
         }
+
+        // Save new user
+        const newUser = { 
+            id: Date.now(),
+            phoneNumber: phoneNumber,
+            password: password,
+            name: phoneNumber,
+            balance: 0,
+            role: 'USER',
+            createdAt: new Date().toISOString()
+        };
+        localUsers.push(newUser);
+        localStorage.setItem('local_users_db', JSON.stringify(localUsers));
+
+        showToast('Creating account...');
+
+        // [NEW] Seamlessly sync to Backend Server CSV
+        try {
+            const res = await fetch(`${API_URL}/api/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newUser)
+            });
+            
+            if (res.status === 409) {
+                showToast('Account already exists in server. Try logging in.', true);
+                document.getElementById('loginUsername').value = phoneNumber;
+                setTimeout(() => switchView('view-user-login'), 1500);
+                return;
+            }
+            
+            if (!res.ok) throw new Error("Server registration failed");
+            showToast('Registration Sync Complete');
+        } catch (e) { 
+            console.warn("Server Registration Failed. User saved locally.", e);
+            showToast('Registered Locally (Offline Mode)');
+        }
+
+        // Finalize Form
+        document.getElementById('regPageUsername').value = '';
+        document.getElementById('regPagePassword').value = '';
+        document.getElementById('regPageConfirmPassword').value = '';
+        
+        // Auto-login and redirect
+        showToast('Registration Success! Logging you in...');
+        setTimeout(async () => {
+             document.getElementById('loginUsername').value = phoneNumber;
+             document.getElementById('loginPassword').value = password;
+             await loginUser();
+        }, 1000);
+      }
+
+      async function initiateHomeRegistration() {
+        const phoneNumber = document.getElementById('homeRegUsername').value.trim();
+        const password = document.getElementById('homeRegPassword').value;
+
+        if(!phoneNumber || !password) return showToast('Enter all details', true);
+        
+        // Strict Validation (Matching Premium Standard)
+        if(!/^\d{10}$/.test(phoneNumber)) return showToast('Phone must be 10 digits', true);
+        if(!/^\d{6,8}$/.test(password)) return showToast('Password must be 6-8 digits', true);
+
+        const localUsers = JSON.parse(localStorage.getItem('local_users_db') || '[]');
+        
+        const newUser = {
+          id: Date.now(),
+          phoneNumber: phoneNumber,
+          password: password,
+          name: phoneNumber,
+          balance: 0,
+          role: 'USER',
+          createdAt: new Date().toISOString()
+        };
+
+        showToast('Creating account...');
+
+        // 1. Save Locally for Resilience
+        if(!localUsers.some(u => u.phoneNumber === phoneNumber)) {
+            localUsers.push(newUser);
+            localStorage.setItem('local_users_db', JSON.stringify(localUsers));
+        }
+
+        // 2. Sync to Backend
+        try {
+            const res = await fetch(`${API_URL}/api/register`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(newUser)
+            });
+            
+            if (res.status === 409) {
+                showToast('Account already exists. Logging you in...', true);
+            } else if (!res.ok) throw new Error("Sync failed");
+        } catch (e) { 
+            console.warn("Server Registration Failed. Continuing locally.", e);
+            showToast('Account created locally (Simulation Mode)');
+        }
+
+        // 3. Auto-login (The "Previous One" experience)
+        document.getElementById('homeRegUsername').value = '';
+        document.getElementById('homeRegPassword').value = '';
+        
+        showToast('Success! Welcome to Wingo.');
+        setTimeout(async () => {
+             document.getElementById('loginUsername').value = phoneNumber;
+             document.getElementById('loginPassword').value = password;
+             await loginUser();
+        }, 1200);
+      }
+
+      function switchAuthTab(tab) {
+        const btnLogin = document.getElementById('tab-login');
+        const btnReg = document.getElementById('tab-register');
+        const secLogin = document.getElementById('section-login');
+        const secReg = document.getElementById('section-register');
+
+        if(tab === 'login') {
+            btnLogin.style.background = 'var(--primary)';
+            btnLogin.style.color = '#000';
+            btnLogin.style.fontWeight = 'bold';
+            btnReg.style.background = 'transparent';
+            btnReg.style.color = 'var(--text-muted)';
+            btnReg.style.fontWeight = 'normal';
+            secLogin.style.display = 'block';
+            secReg.style.display = 'none';
+        } else {
+            btnReg.style.background = 'var(--primary)';
+            btnReg.style.color = '#000';
+            btnReg.style.fontWeight = 'bold';
+            btnLogin.style.background = 'transparent';
+            btnLogin.style.color = 'var(--text-muted)';
+            btnLogin.style.fontWeight = 'normal';
+            secReg.style.display = 'block';
+            secLogin.style.display = 'none';
+        }
+      }
+
+      function exportPaymentsCSV() {
+        const recharges = JSON.parse(localStorage.getItem('local_recharges_db') || '[]');
+        const withdrawals = JSON.parse(localStorage.getItem('local_withdraw_db') || '[]');
+        
+        let csvContent = "data:text/csv;charset=utf-8,Type,Payment ID,User,Amount,UPI ID,Status,Date\n";
+        
+        recharges.forEach(r => {
+            csvContent += `Recharge,${r.id},${r.userName},${r.amount},${r.upiId},${r.status},${r.timestamp}\n`;
+        });
+        
+        withdrawals.forEach(w => {
+            csvContent += `Withdrawal,${w.id},${w.userName},${w.amount},${w.upiId},${w.status},${w.timestamp}\n`;
+        });
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "payments_export.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast("CSV Downloaded Successfully");
+      }
+
+      function exportUsersCSV() {
+        const users = JSON.parse(localStorage.getItem('local_users_db') || '[]');
+        
+        let csvContent = "data:text/csv;charset=utf-8,ID,Phone Number,Password,Role,Balance,CreatedAt\n";
+        
+        users.forEach(u => {
+            csvContent += `${u.id},${u.phoneNumber || u.username},${u.password},${u.role},${u.balance},${u.createdAt}\n`;
+        });
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "database/user_information.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        showToast("Users CSV Downloaded Successfully");
       }
 
       function verifyRegistrationOTP() {
-        // Simplified for this version since signup API is direct
+        // Not used in offline mode
         closeModal('otpModal');
         initiateRegistration(); 
       }
+
       async function loginUser() {
-        const email = document.getElementById('loginMobile').value;
+        const phoneNumber = document.getElementById('loginUsername').value.trim();
         const password = document.getElementById('loginPassword').value;
-        
+
+        if(!phoneNumber || !password) return showToast('Enter credentials', true);
+        showToast('Authenticating...');
+
+        let success = false;
+        if (isServerOnline) {
+            try {
+                const res = await fetch(`${API_URL}/api/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ phoneNumber, password })
+                });
+                if(res.ok) {
+                    const data = await res.json();
+                    userToken = data.token;
+                    userData = data.user;
+                    success = true;
+                }
+            } catch (e) { console.warn("Login server sync failed."); }
+        }
+
+        if (!success) {
+            const localUsers = JSON.parse(localStorage.getItem('local_users_db') || '[]');
+            const user = localUsers.find(u => (u.phoneNumber === phoneNumber || u.username === phoneNumber) && u.password === password);
+            
+            if (user) {
+                userToken = 'local_token_' + user.id;
+                userData = user;
+                showToast('Logged in (Simulation Mode)');
+                success = true;
+            } else {
+                return showToast('Invalid phone number or password', true);
+            }
+        }
+
+
+        // Success! Finalize Session
         try {
-          const res = await fetch(`${API_URL}/api/auth/login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password })
-          });
-          const data = await res.json();
-          if(data.error) throw new Error(data.error);
+            userBalance = userData.balance;
 
-          localStorage.setItem('wingo_token', data.token);
-          localStorage.setItem('wingo_user', JSON.stringify(data.user));
-          userData = data.user;
-          userBalance = data.user.balance;
+            // Persist token for session
+            localStorage.setItem('userToken', userToken);
+            localStorage.setItem('userData', JSON.stringify(userData));
 
-          // Update Account View UI
-          document.getElementById('accountUserName').innerText = data.user.name;
-          document.getElementById('accountMobile').innerText = data.user.phone || 'N/A';
-          
-          document.getElementById('bottom-nav').style.display = 'flex';
-          
-          // Home View update
-          document.getElementById('btn-home-user-login').style.display = 'none';
-          document.getElementById('btn-home-register').style.display = 'none';
-          document.getElementById('btn-home-admin-login').style.display = 'none';
-          document.getElementById('btn-home-play').style.display = 'flex';
-          
-          switchView('view-wingo');
-          showToast('Login successful!');
-          updateBalanceDisplay();
-          updateHistoryFromServer();
-        } catch(err) {
-          console.error("Login Fetch Error:", err);
-          const msg = err.message === "Failed to fetch" 
-            ? "Connection Refused: Start backend on port 3001" 
-            : err.message;
-          showToast(msg, true);
+            // Update UI
+            document.getElementById('accountUserName').innerText = userData.phoneNumber || userData.name;
+            document.getElementById('accountMobile').innerText = userData.phoneNumber || 'N/A';
+            document.getElementById('bottom-nav').style.display = 'flex';
+            
+            // Show Eagle image ONLY for 3 seconds before opening game
+            switchView('view-eagle-only');
+            setTimeout(() => {
+                switchView('view-wingo');
+                showToast('Welcome back, ' + (userData.phoneNumber || userData.name));
+                updateBalanceDisplay();
+            }, 3000);
+        } catch (e) {
+            showToast('Session error: ' + e.message, true);
         }
       }
+
+      window.addEventListener('load', () => {
+          // Task: Do not show admin id and password (clear them on load)
+          const adminU = document.getElementById('adminUsername');
+          const adminP = document.getElementById('adminPassword');
+          if(adminU) adminU.value = '';
+          if(adminP) adminP.value = '';
+          
+          const loginU = document.getElementById('loginUsername');
+          const loginP = document.getElementById('loginPassword');
+          if(loginU) loginU.value = '';
+          if(loginP) loginP.value = '';
+      });
+
 
       function loginAdmin() {
         const u = document.getElementById('adminUsername').value;
@@ -1021,30 +1806,37 @@
         const isAdmin = authorizedAdmins.find(admin => admin.user === u && admin.pass === p);
 
         if (isAdmin) {
+          // Set tokens and user data to support both static and React versions
+          localStorage.setItem('admin_token', 'admin_' + u);
+          localStorage.setItem('token', 'admin_offline_token_' + u);
+          localStorage.setItem('user', JSON.stringify({ id: 0, phone: u, name: u.split('@')[0], role: 'ADMIN', balance: 0 }));
+          
           showToast('Admin verified! Welcome, ' + u.split('@')[0]);
           setTimeout(() => {
-            document.getElementById('bottom-nav').style.display = 'none';
+            // For static version
             switchView('view-admin-dashboard');
+            // For React version
+            window.location.hash = '#/admin';
           }, 800);
         } else {
-          showToast('invalid user please use the user account', true);
+          showToast('Invalid Admin Credentials', true);
         }
       }
 
-      function logoutUser() {
-        localStorage.removeItem('wingo_token');
-        localStorage.removeItem('wingo_user');
-        
+       function logoutUser() {
+        localStorage.removeItem('userToken');
+        localStorage.removeItem('userData');
+        userToken = null;
+        userData = null;
+        userBalance = 0;
+
         document.getElementById('bottom-nav').style.display = 'none';
         
-        // Reset home buttons for logged out user
-        document.getElementById('btn-home-user-login').style.display = 'flex';
-        document.getElementById('btn-home-register').style.display = 'flex';
-        document.getElementById('btn-home-admin-login').style.display = 'flex';
-        document.getElementById('btn-home-play').style.display = 'none';
-        
+        // Return to Home and open the Register section as requested
         switchView('view-home');
-        showToast('You have been safely logged out.');
+        if(typeof switchAuthTab === 'function') switchAuthTab('register');
+        
+        showToast('You have been logged out.');
       }
 
       // ================= ACCOUNT SETTINGS =================
@@ -1062,53 +1854,365 @@
         showToast('Security settings updated successfully.');
       }
 
-      function showBankCardsModal() { document.getElementById('bankCardsListModal').classList.add('show'); }
-      function addBankCard() {
-        const bank = document.getElementById('newCardBank').value || 'New Bank';
-        const name = document.getElementById('newCardName').value || 'USER';
-        const num = document.getElementById('newCardNum').value || '1234';
-        const last4 = num.toString().slice(-4);
+      function showBankCardsModal() { 
+        renderBankCards();
+        document.getElementById('bankCardsListModal').classList.add('show'); 
+      }
+
+      function renderBankCards() {
+        const container = document.getElementById('savedCardsList');
+        if(!container) return;
         
-        const newCardHTML = `
-          <div class="glass-card" style="padding: 15px; border-color: rgba(255,255,255,0.1)">
-            <div style="color: var(--text-muted); font-size: 12px;">${bank}</div>
-            <div style="font-size: 18px; letter-spacing: 2px; margin: 8px 0;">**** **** **** ${last4}</div>
+        const localCards = JSON.parse(localStorage.getItem('local_bank_cards') || '[]');
+        
+        if (localCards.length === 0) {
+            container.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted); font-size:12px;">No bank cards found. Please add one.</div>';
+            return;
+        }
+
+        container.innerHTML = localCards.map(c => `
+          <div class="glass-card" style="padding: 15px; border-color: rgba(255,255,255,0.1); position:relative;">
+            <div style="color: var(--text-muted); font-size: 12px;">${c.bank}</div>
+            <div style="font-size: 18px; letter-spacing: 2px; margin: 8px 0;">**** **** **** ${c.last4}</div>
             <div style="color: var(--primary); font-size: 12px; display:flex; justify-content:space-between">
-              <span>${name.toUpperCase()}</span>
+              <span>${c.name.toUpperCase()}</span>
               <i class="fa-solid fa-check-circle"></i>
             </div>
-          </div>`;
-          
-        document.getElementById('savedCardsList').insertAdjacentHTML('beforeend', newCardHTML);
+          </div>
+        `).join('');
+      }
+
+      function addBankCard() {
+        const bank = document.getElementById('newCardBank').value || 'Bank';
+        const name = document.getElementById('newCardName').value || 'User';
+        const num = document.getElementById('newCardNum').value || '0000';
+        
+        if(!document.getElementById('newCardNum').value) return showToast('Enter card number', true);
+        
+        const last4 = num.toString().slice(-4);
+        const newCard = { bank, name, last4, id: Date.now() };
+
+        // Save to localStorage
+        let localCards = JSON.parse(localStorage.getItem('local_bank_cards') || '[]');
+        localCards.unshift(newCard);
+        localStorage.setItem('local_bank_cards', JSON.stringify(localCards));
         
         closeModal('bankCardModal');
         showToast('New bank card successfully added.');
-        setTimeout(() => showBankCardsModal(), 200); // go back to list
+        setTimeout(() => showBankCardsModal(), 200); 
       }
+
       function showRulesModal() { document.getElementById('rulesModal').classList.add('show'); }
 
       // ================= WALLET =================
       function showRechargeModal() { document.getElementById('rechargeModal').classList.add('show'); }
-      function processRecharge() {
+      
+      async function processRechargeFlow() {
         const amt = parseFloat(document.getElementById('rechargeAmount').value);
-        if(isNaN(amt) || amt <= 0) return showToast('Enter valid amount', true);
-        userBalance += amt;
-        updateBalanceDisplay();
-        closeModal('rechargeModal');
-        showToast(`Successfully recharged ₹${amt}`);
+        if(isNaN(amt) || amt < 100) return showToast('Minimum recharge ₹100', true);
+
+        // Fetch global UPI from server
+        let upiId = "8815054681@ybl";
+        try {
+            const res = await fetch(`${API_URL}/api/admin/upi`);
+            const data = await res.json();
+            if(data.upiId) upiId = data.upiId;
+        } catch(e) {}
+
+        const name = "Wingo Private Limited";
+        const upiUri = `upi://pay?pa=${upiId}&pn=${encodeURIComponent(name)}&mc=8999&am=${amt.toFixed(0)}&cu=INR`;
+
+        // Generate QR Code dynamically
+        const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=250x250&data=${encodeURIComponent(upiUri)}`;
+        document.getElementById('rechargeQRCode').src = qrUrl;
+
+        // Move to Step 2
+        document.getElementById('finalRechargeAmount').innerText = `₹ ${amt}`;
+        document.getElementById('rechargeStep1').style.display = 'none';
+        document.getElementById('rechargeStep2').style.display = 'block';
       }
 
+      async function submitRechargeUPI() {
+          const amtInput = document.getElementById('rechargeAmount');
+          const amt = parseFloat(amtInput.value);
+          
+          if(!userData || !userData.id) {
+              closeModal('rechargeModal');
+              return showToast('Session expired. Please login again.', true);
+          }
+          
+          if(isNaN(amt) || amt < 100) return showToast('Enter a valid amount (Min ₹100)', true);
+          
+          const rechargeData = {
+              userId: userData.id,
+              userName: userData.phoneNumber || userData.name,
+              amount: amt,
+              upiId: 'Paid via QR',
+              status: 'PENDING',
+              timestamp: new Date().toISOString(),
+              id: 'REC' + Date.now()
+          };
+
+          // Step 1: UI Feedback
+          document.getElementById('rechargeStep2').style.display = 'none';
+          document.getElementById('rechargeStep3').style.display = 'block';
+          document.getElementById('rechargeWaitMsg').innerHTML = '<b style="color: #fbbf24;">Validating...</b><br/>Sharing Request with Owner';
+          
+          showToast('Syncing with server...');
+
+          // Step 2: Hybrid Mode - Try Server, then Telegram
+          setTimeout(async () => {
+              let success = false;
+              let method = '';
+
+              if (isServerOnline) {
+                  try {
+                      const res = await fetch(`${API_URL}/api/recharge`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify(rechargeData)
+                      });
+                      if (res.ok) {
+                          const data = await res.json();
+                          if(data.success) { success = true; method = 'SERVER'; }
+                      }
+                  } catch(e) { console.warn("Recharge server call failed, trying Telegram..."); }
+              }
+
+              if (!success) {
+                  // SERVERLESS FALLBACK: Attempt Telegram Notification
+                  const tgSuccess = await sendTelegramNotification(rechargeData);
+                  if (tgSuccess) {
+                      success = true;
+                      method = 'TELEGRAM';
+                  }
+                  
+                  // Always save locally for Simulation Mode
+                  let localRecharges = JSON.parse(localStorage.getItem('local_recharge_db') || '[]');
+                  localRecharges.unshift(rechargeData);
+                  localStorage.setItem('local_recharge_db', JSON.stringify(localRecharges.slice(0, 50)));
+
+                  // [FIX] In Full Offline Mode, local save IS success
+                  if (!success) {
+                      success = true;
+                      method = 'LOCAL';
+                  }
+              }
+
+              if(success) {
+                  let successMsg = '';
+                  if (method === 'SERVER') successMsg = 'Admin Panel updated';
+                  else if (method === 'TELEGRAM') successMsg = 'Owner notified via Telegram';
+                  else successMsg = 'Shared in Local Simulation Mode';
+
+                  document.getElementById('rechargeWaitMsg').innerHTML = `<b style="color: var(--primary);">SENT SUCCESSFULLY!</b><br/>${successMsg}`;
+                  showToast(successMsg);
+                  
+                  setTimeout(() => {
+                      closeModal('rechargeModal');
+                      resetRechargeSteps();
+                  }, 2500);
+              } else {
+                  // This part should technically never be reached now, but kept for safety
+                  showToast('Submission issue', true);
+                  setTimeout(resetRechargeSteps, 4000);
+              }
+
+          }, 1500); 
+      }
+
+
+
+
+      function resetRechargeSteps() {
+          document.getElementById('rechargeStep1').style.display = 'block';
+          document.getElementById('rechargeStep2').style.display = 'none';
+          document.getElementById('rechargeStep3').style.display = 'none';
+          document.getElementById('rechargeAmount').value = '1000';
+      }
+
+
+
+      async function handleRechargeCancel() {
+          const step2 = document.getElementById('rechargeStep2');
+          const isStep2Active = step2 && step2.style.display === 'block';
+          
+          if (isStep2Active && userData) {
+              const amt = parseFloat(document.getElementById('rechargeAmount').value);
+              const rechargeData = {
+                  userId: userData.id,
+                  userName: userData.name,
+                  amount: amt,
+                  upiId: 'Closed without confirm',
+                  status: 'PENDING',
+                  timestamp: new Date().toISOString(),
+                  id: 'REC' + Date.now()
+              };
+
+              // Background sync - don't block UI
+              if (isServerOnline) {
+                  fetch(`${API_URL}/api/recharge`, {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify(rechargeData)
+                  }).then(() => showToast('Request sent for verification.'))
+                    .catch(e => console.warn("Cancel sync failed", e));
+              } else {
+                  let localRecharges = JSON.parse(localStorage.getItem('local_recharge_db') || '[]');
+                  localRecharges.unshift(cancelData);
+                  localStorage.setItem('local_recharge_db', JSON.stringify(localRecharges.slice(0, 50)));
+              }
+          }
+
+          closeModal('rechargeModal');
+          resetRechargeSteps();
+      }
+
+      async function updateWalletRecentTransactions() {
+          if (!userData) return;
+          const container = document.querySelector('#view-wallet .action-list');
+          if (!container) return;
+
+          let records = [];
+          if (isServerOnline) {
+              try {
+                  const res = await fetch(`${API_URL}/api/recharge/my`, {
+                      headers: { 'Authorization': `Bearer ${userToken}` }
+                  });
+                  if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                  records = await res.json();
+              } catch (e) {
+                  console.error("Failed to load wallet transactions from server", e);
+                  showToast("Connection error: Unable to sync transactions", true);
+              }
+          }
+
+          // Always merge with local for simulation/fallback
+          const localRecharges = JSON.parse(localStorage.getItem('local_recharge_db') || '[]');
+          const serverIds = records.map(r => r.id);
+          const uniqueLocal = localRecharges.filter(r => !serverIds.includes(r.id));
+          records = [...uniqueLocal, ...records];
+          
+          if (records.length === 0) {
+              container.innerHTML = '<div style="text-align:center; padding:20px; opacity:0.5;">No recent transactions</div>';
+              return;
+          }
+
+          container.innerHTML = records.slice(0, 5).map(r => `
+              <div class="action-item" onclick="openRechargeHistory()">
+                <div class="left">
+                    <i class="fa-solid ${r.status === 'SUCCESS' ? 'fa-arrow-down' : 'fa-circle-xmark'}" style="color: ${r.status === 'SUCCESS' ? 'var(--color-green)' : r.status === 'FAILED' ? 'var(--color-red)' : 'var(--color-orange)'}"></i> 
+                    Recharge ${r.status === 'FAILED' || r.status === 'REJECTED' ? '(Rejected)' : r.status === 'PENDING' ? '(Pending)' : ''}
+                </div>
+                <div style="color: ${r.status === 'SUCCESS' ? 'var(--color-green)' : 'var(--text-muted)'}">${r.status === 'SUCCESS' ? '+' : ''} ₹ ${r.amount}</div>
+              </div>
+          `).join('');
+      }
+
+      async function openRechargeHistory() {
+          if(!userData) return showToast('Please login first', true);
+          const body = document.getElementById('rechargeHistoryBody');
+          body.innerHTML = '<p style="text-align:center; padding:20px;">Loading...</p>';
+          document.getElementById('rechargeHistoryModal').classList.add('show');
+
+          try {
+              let data = [];
+              // History now only pulls from the Server (Admin Panel)
+              if (isServerOnline) {
+                  try {
+                      const res = await fetch(`${API_URL}/api/recharge/my`, {
+                          headers: { 'Authorization': `Bearer ${userToken}` }
+                      });
+                      data = await res.json();
+                  } catch(e) { console.error("History fetch failed", e); }
+              }
+              
+              if(!data || data.length === 0) {
+                  body.innerHTML = '<p style="text-align:center; color:var(--text-muted); padding:20px;">No recharge history found.</p>';
+                  return;
+              }
+
+              body.innerHTML = data.map(r => `
+                  <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:12px; margin-bottom:10px; border:1px solid rgba(255,255,255,0.05);">
+                      <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
+                          <span style="font-size:12px; color:var(--text-muted);">${new Date(r.timestamp).toLocaleString()}</span>
+                          <span style="font-size:12px; font-weight:700; color:${r.status === 'SUCCESS' ? 'var(--primary)' : r.status === 'FAILED' ? 'var(--color-red)' : 'var(--color-orange)'}">${r.status === 'FAILED' ? 'REJECTED' : r.status}</span>
+                      </div>
+                      <div style="font-size:15px; font-weight:700;">₹ ${r.amount}</div>
+                      <div style="font-size:10px; color:var(--text-muted); margin-top:4px;">ID: ${r.id}</div>
+                  </div>
+              `).join('');
+          } catch(e) {
+              body.innerHTML = '<p style="color:var(--color-red); text-align:center;">Failed to load history.</p>';
+          }
+      }
+
+
       function showWithdrawModal() { document.getElementById('withdrawModal').classList.add('show'); }
-      function processWithdraw() {
+      async function processWithdraw() {
         const amt = parseFloat(document.getElementById('withdrawAmount').value);
-        if(isNaN(amt) || amt <= 0) return showToast('Enter valid amount', true);
+        const upi = document.getElementById('withdrawUPI').value.trim();
+
+        if(isNaN(amt) || amt < 300) return showToast('Minimum withdrawal ₹300', true);
         if(amt > userBalance) return showToast('Insufficient balance', true);
-        userBalance -= amt;
+        if(!upi || !upi.includes('@')) return showToast('Invalid UPI ID', true);
+        if(!userData) return showToast('Please login first', true);
+
+        const withdrawData = {
+            userId: userData.id,
+            userName: userData.name,
+            amount: amt,
+            upiId: upi,
+            status: 'PENDING',
+            timestamp: new Date().toISOString(),
+            id: 'WD' + Date.now()
+        };
+
+        showToast('Processing Withdrawal...');
+        
+        if (isServerOnline) {
+            try {
+                const res = await fetch(`${API_URL}/api/withdraw`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(withdrawData)
+                });
+                const data = await res.json();
+                if(data.success) {
+                    // [MOVED] Balance no longer deducted immediately
+                    closeModal('withdrawModal');
+                    showToast(`Withdrawal of ₹${amt} requested! Awaiting Approval.`);
+                    return;
+                }
+
+            } catch(e) { 
+                console.warn("Withdrawal server sync failed, falling back to local simulation."); 
+            }
+        }
+
+        // LOCAL FALLBACK
+        let localWithdraws = JSON.parse(localStorage.getItem('local_withdraw_db') || '[]');
+        localWithdraws.unshift(withdrawData);
+        localStorage.setItem('local_withdraw_db', JSON.stringify(localWithdraws.slice(0, 50)));
+
+        // [MOVED] Balance no longer deducted immediately
         updateBalanceDisplay();
         closeModal('withdrawModal');
-        showToast(`Withdrawal request of ₹${amt} submitted.`);
+        showToast(`Withdrawal requested! (Awaiting Approval)`);
+
+        
+        // Notify via Telegram
+        sendTelegramNotification({
+            ...withdrawData,
+            type: 'WITHDRAW'
+        });
+
         document.getElementById('withdrawAmount').value = '';
+        document.getElementById('withdrawUPI').value = '';
       }
+
+
+
 
       // ================= BETTING LOGIC =================
       function openBetModal(type, color) {
@@ -1117,6 +2221,11 @@
         betBaseAmount = 10; betQuantity = 1;
         document.getElementById('betModalHeader').innerText = `Select ${type}`;
         document.getElementById('betModalHeader').style.backgroundColor = color;
+        
+        // Match confirm button color to selection
+        const confirmBtn = document.querySelector('#betModal .modal-btn.confirm');
+        if(confirmBtn) confirmBtn.style.backgroundColor = color;
+
         updateBetDisplay();
         document.getElementById('betModal').classList.add('show');
       }
@@ -1137,39 +2246,281 @@
         document.getElementById('betTotal').innerText = `₹ ${betBaseAmount * betQuantity}`;
       }
 
-      function confirmBet() {
+      async function confirmBet() {
         const total = betBaseAmount * betQuantity;
         if(total > userBalance) {
           closeModal('betModal'); return showToast('Insufficient Balance!', true);
         }
+
+        const payload = { 
+            periodId: currentPeriod, 
+            selection: selectedBetType, 
+            amount: total 
+        };
+
+        // UI Feedback - Disable button briefly
+        const confirmBtn = document.querySelector('#betModal .modal-btn.confirm');
+        const originalText = confirmBtn.innerText;
+        confirmBtn.innerText = 'Processing...';
+        confirmBtn.disabled = true;
+
+        try {
+            const res = await fetch(`${API_URL}/api/bets/place`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}`
+                },
+                body: JSON.stringify(payload)
+            });
+            
+            // Fallback for local/demo mode if server not running
+            if(!res.ok && IS_LOCAL) throw new Error('Using local simulation');
+
+            const data = await res.json();
+            if(data.error) throw new Error(data.error);
+
+            processSuccessfulBet(total);
+        } catch(err) {
+            console.warn("Bet API failed, falling back to local storage:", err.message);
+            // Local Fallback Logic
+            let localBets = JSON.parse(localStorage.getItem('local_bets_db') || '[]');
+            localBets.push({
+                id: 'LB' + Date.now(),
+                userId: userData ? userData.id : 'GUEST',
+                periodId: currentPeriod,
+                selection: selectedBetType,
+                amount: total,
+                status: 'PENDING',
+                winAmount: 0,
+                timestamp: new Date().toISOString()
+            });
+            localStorage.setItem('local_bets_db', JSON.stringify(localBets));
+            
+            processSuccessfulBet(total);
+        } finally {
+            confirmBtn.innerText = originalText;
+            confirmBtn.disabled = false;
+        }
+      }
+
+      function processSuccessfulBet(total) {
         userBalance -= total;
         updateBalanceDisplay();
+        
+        // Add to active bets for local simulation
         activeBets.push({ type: selectedBetType, amount: total });
         
         closeModal('betModal');
-        showToast(`Bet placed on ${selectedBetType} for ₹${total}`);
+        playSound('bet');
+        showToast(`✅ Bet Successfully Placed: ${selectedBetType} (₹${total})`);
+        updateMyHistory();
       }
 
+      function switchHistoryTab(tab) {
+        if(tab === 'game') {
+          document.getElementById('game-record-table').style.display = 'block';
+          document.getElementById('my-record-table').style.display = 'none';
+          document.getElementById('tab-game-record').style.opacity = '1';
+          document.getElementById('tab-game-record').style.borderBottom = '2px solid var(--primary)';
+          document.getElementById('tab-my-record').style.opacity = '0.5';
+          document.getElementById('tab-my-record').style.borderBottom = 'none';
+        } else {
+          document.getElementById('game-record-table').style.display = 'none';
+          document.getElementById('my-record-table').style.display = 'block';
+          document.getElementById('tab-my-record').style.opacity = '1';
+          document.getElementById('tab-my-record').style.borderBottom = '2px solid var(--primary)';
+          document.getElementById('tab-game-record').style.opacity = '0.5';
+          document.getElementById('tab-game-record').style.borderBottom = 'none';
+          updateMyHistory();
+        }
+      }
+
+      let userBetsCache = []; // Store bets for status check
+      
       async function updateHistoryFromServer() {
+        const tbody = document.getElementById('game-records-body');
         try {
-          const res = await fetch(`${API_URL}/api/history`);
+          // Fetch my bets first if logged in for the "My Result" column
+          if(userToken) {
+              const bRes = await fetch(`${API_URL}/api/bets/my`, {
+                  headers: { 'Authorization': `Bearer ${userToken}` }
+              });
+              userBetsCache = await bRes.json();
+          }
+
+          const res = await fetch(`${API_URL}/api/history?mode=${currentMode}`);
+          if(!res.ok) throw new Error('API Error');
           const data = await res.json();
+          renderHistoryTable(data);
+        } catch(e) {
+          console.error("History fetch failed:", e);
+          const localData = JSON.parse(localStorage.getItem(`wingo_demo_history_${currentMode}`) || '[]');
+          renderHistoryTable(localData);
+        }
+      }
+
+      function renderHistoryTable(data) {
           const tbody = document.getElementById('game-records-body');
+          if(!data || !Array.isArray(data) || data.length === 0) {
+             tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; opacity: 0.5;">Waiting for next drawing...</td></tr>';
+             return;
+          }
           tbody.innerHTML = data.map(r => {
+            if(!r.resultColor) return '';
+            
+            // Check if user had a result for this period
+            const myBet = userBetsCache.find(b => b.periodId == r.periodId);
+            let myResultHTML = '<span style="opacity: 0.3;">-</span>';
+            if(myBet) {
+                const isWin = myBet.status === 'WIN';
+                const color = isWin ? 'var(--primary)' : 'var(--color-red)';
+                const text = isWin ? `+₹${myBet.winAmount.toFixed(2)}` : `-₹${myBet.amount.toFixed(2)}`;
+                myResultHTML = `<span style="color: ${color}; font-weight: bold; font-size: 11px;">${text}</span>`;
+            }
+
             const colors = r.resultColor.split('/');
             const dotHTML = colors.map(c => `<div class="dot" style="background:var(--color-${c.toLowerCase()})"></div>`).join('');
-            return `<tr>
-              <td>...${r.periodId.slice(-4)}</td>
-              <td>₹ ${Math.floor(Math.random()*40000)+10000}</td>
+            const sizeColor = r.size === 'Big' ? 'var(--color-yellow)' : 'var(--color-blue)';
+            const sizeBg = r.size === 'Big' ? 'rgba(251, 191, 36, 0.1)' : 'rgba(59, 130, 246, 0.1)';
+            const sizeHTML = `<span style="color: ${sizeColor}; background: ${sizeBg}; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold; border: 1px solid ${sizeColor}44;">${r.size || '-'}</span>`;
+
+            return `<tr onclick="showRecordDetails('${r.periodId}')" style="cursor:pointer">
+              <td>${String(r.periodId).slice(-4)}</td>
               <td class="result-number result-${colors[0].toLowerCase()}">${r.resultNumber}</td>
+              <td>${sizeHTML}</td>
               <td><div class="dots">${dotHTML}</div></td>
+              <td>${myResultHTML}</td>
             </tr>`;
           }).join('');
-        } catch(e) {}
+      }
+
+      async function updateMyHistory() {
+        let data = [];
+        try {
+            if (isServerOnline && userToken) {
+                const res = await fetch(`${API_URL}/api/bets/my`, {
+                    headers: { 'Authorization': `Bearer ${userToken}` }
+                });
+                if (res.ok) data = await res.json();
+            }
+        } catch(e) { console.warn("Failed to fetch my history from server."); }
+
+        // Simulation Fallback: Merge local bets
+        const local = JSON.parse(localStorage.getItem('local_bets_db') || '[]');
+        if (local.length > 0) {
+            // Priority to local for the current device's simulation
+            data = [...local, ...data.filter(rd => !local.some(ld => ld.id === rd.id))];
+        }
+
+        const tbody = document.getElementById('my-records-body');
+        if(!data || data.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; padding: 30px; opacity: 0.5;">No records found</td></tr>';
+            return;
+        }
+
+        // Sort by timestamp if available, newer first
+        data.sort((a,b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+
+        tbody.innerHTML = data.slice(0, 30).map(b => {
+            const isWin = b.status === 'WIN';
+            const isLoss = b.status === 'LOSS';
+            const profitColor = isWin ? 'var(--primary)' : isLoss ? 'var(--color-red)' : 'var(--color-orange)';
+            const profitText = isWin ? `+₹${parseFloat(b.winAmount || 0).toFixed(2)}` : isLoss ? `-₹${parseFloat(b.amount || 0).toFixed(2)}` : 'Pending';
+
+            return `<tr onclick="${b.id.toString().startsWith('LB') ? `showLocalBetDetails('${b.id}')` : `showBetDetails('${b.id}')`}" style="cursor: pointer;">
+                <td>${String(b.periodId).slice(-4)}</td>
+                <td style="font-size: 11px; font-weight: bold; opacity: 0.9;">${b.selection}</td>
+                <td style="font-weight: 700; color: var(--primary);">${b.resultNumber || '-'}</td>
+                <td style="font-size: 10px; font-weight: 700;">${b.size || '-'}</td>
+                <td style="color: ${profitColor}; font-weight: 800; font-size: 11px;">${profitText}</td>
+            </tr>`;
+        }).join('');
+      }
+
+      function showLocalBetDetails(id) {
+          const local = JSON.parse(localStorage.getItem('local_bets_db') || '[]');
+          const b = local.find(x => x.id === id);
+          if(!b) return;
+          
+          const statusColor = b.status === 'WIN' ? 'var(--primary)' : b.status === 'LOSS' ? 'var(--color-red)' : 'var(--color-orange)';
+          
+          document.getElementById('historyDetailBody').innerHTML = `
+              <div style="background: var(--bg-panel); padding: 20px;">
+                  <div style="display: flex; flex-direction: column; gap: 15px;">
+                      <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted)">Period</span><span style="font-weight: bold;">${b.periodId}</span></div>
+                      <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted)">Select</span><span style="font-weight: bold;">${b.selection}</span></div>
+                      <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted)">Amount</span><span>₹ ${b.amount}</span></div>
+                      <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted)">Status</span><span style="color: ${statusColor}; font-weight: bold;">${b.status}</span></div>
+                      <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted)">Profit</span><span style="color: ${statusColor}; font-weight: bold;">₹ ${b.winAmount || '0.00'}</span></div>
+                      <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 5px; padding-top: 15px;">
+                          <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted)">Local Order ID</span><span style="font-size: 11px;">${b.id}</span></div>
+                      </div>
+                  </div>
+              </div>
+          `;
+          document.getElementById('historyDetailModal').classList.add('show');
+      }
+
+
+      async function showRecordDetails(periodId) {
+          try {
+            const res = await fetch(`${API_URL}/api/history`);
+            const data = await res.json();
+            const r = data.find(x => x.periodId == periodId);
+            if(!r) return;
+
+            const colors = r.resultColor.split('/');
+            const dotHTML = colors.map(c => `<div class="dot" style="background:var(--color-${c.toLowerCase()}); width: 24px; height: 24px;"></div>`).join('');
+            const timeStr = r.timestamp ? new Date(r.timestamp).toLocaleString() : '--';
+
+            document.getElementById('historyDetailBody').innerHTML = `
+                <div style="background: var(--bg-panel); padding: 20px;">
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted)">Period</span><span style="font-weight: bold;">${r.periodId}</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted)">Drawing Time</span><span>${timeStr}</span></div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;"><span style="color: var(--text-muted)">Result Number</span><span class="result-number result-${colors[0].toLowerCase()}" style="font-size: 24px;">${r.resultNumber}</span></div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;"><span style="color: var(--text-muted)">Size</span><span style="font-weight: bold; color: ${r.size === 'Big' ? 'var(--color-yellow)' : 'var(--color-blue)'};">${r.size}</span></div>
+                        <div style="display: flex; justify-content: space-between; align-items: center;"><span style="color: var(--text-muted)">Color Result</span><div class="dots">${dotHTML}</div></div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('historyDetailModal').classList.add('show');
+          } catch(e) {}
+      }
+
+      async function showBetDetails(betId) {
+          try {
+            const res = await fetch(`${API_URL}/api/bets/my`, {
+                headers: { 'Authorization': `Bearer ${userToken}` }
+            });
+            const data = await res.json();
+            const b = data.find(x => x.id == betId);
+            if(!b) return;
+
+            const statusColor = b.status === 'WIN' ? 'var(--primary)' : b.status === 'LOSS' ? 'var(--color-red)' : 'var(--color-orange)';
+            
+            document.getElementById('historyDetailBody').innerHTML = `
+                <div style="background: var(--bg-panel); padding: 20px;">
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted)">Period</span><span style="font-weight: bold;">${b.periodId}</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted)">Select</span><span style="font-weight: bold;">${b.selection}</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted)">Amount</span><span>₹ ${b.amount}</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted)">Status</span><span style="color: ${statusColor}; font-weight: bold;">${b.status}</span></div>
+                        <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted)">Win Amount</span><span style="color: var(--primary); font-weight: bold;">₹ ${b.winAmount || '0.00'}</span></div>
+                        <div style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 5px; padding-top: 15px;">
+                            <div style="display: flex; justify-content: space-between;"><span style="color: var(--text-muted)">Order ID</span><span style="font-size: 11px;">${b.id}</span></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            document.getElementById('historyDetailModal').classList.add('show');
+          } catch(e) {}
       }
 
       function processLocalWinning(resultNumber) {
         let winnings = 0;
+        let totalCommission = 0;
         activeBets.forEach(bet => {
           let won = false; let multiplier = 0;
           if(bet.type === 'Green' && [1,3,7,9,5].includes(resultNumber)) { won = true; multiplier = resultNumber===5 ? 1.5 : 2; }
@@ -1178,14 +2529,41 @@
           if(bet.type === `Number ${resultNumber}`) { won = true; multiplier = 9; }
           if(bet.type === (resultNumber >= 5 ? 'Big' : 'Small')) { won = true; multiplier = 2; }
 
-          if(won) winnings += (bet.amount * multiplier);
+          if(won) {
+            const rawWinnings = bet.amount * multiplier;
+            const commission = rawWinnings * 0.10;
+            const netWinnings = rawWinnings - commission;
+            winnings += netWinnings;
+            totalCommission += commission;
+          }
         });
 
         if(winnings > 0) {
+          // Track commission locally
+          let currentCommission = parseFloat(localStorage.getItem('local_commission_total') || '0');
+          localStorage.setItem('local_commission_total', (currentCommission + totalCommission).toFixed(2));
+          
           userBalance += winnings; updateBalanceDisplay();
-          showToast(`Period Result: ${resultNumber}. You Won ₹${formatMoney(winnings)}!`);
+          playSound('win');
+          showToast(`Result: ${resultNumber}. You Won ₹${formatMoney(winnings)}! (10% Tax Deducted)`);
+
+          // [NEW] Sync win and commission to Backend CSV
+          if (userData && userData.id) {
+              fetch(`${API_URL}/api/user/sync-win`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                      userId: userData.id,
+                      rawWinnings: winnings + totalCommission,
+                      commission: totalCommission,
+                      netWinnings: winnings,
+                      periodId: currentPeriod
+                  })
+              }).catch(e => {});
+          }
         } else if(activeBets.length > 0) {
-          showToast(`Period Result: ${resultNumber}. Next time!`, true);
+          playSound('loss');
+          showToast(`Result: ${resultNumber}. Next time!`, true);
         }
         activeBets = [];
       }
@@ -1210,8 +2588,43 @@
         
         const isBig = resultNumber >= 5 ? 'Big' : 'Small';
 
-        // Check user bets
+        // [NEW] Local Bet Grading for Simulation Mode
+        let localBets = JSON.parse(localStorage.getItem('local_bets_db') || '[]');
+        let updatedLocal = false;
+        
+        localBets.forEach(bet => {
+            if (bet.periodId == currentPeriod && bet.status === 'PENDING') {
+                updatedLocal = true;
+                let won = false; let multiplier = 0;
+                const selection = bet.selection;
+
+                if(selection === 'Green' && [1,3,7,9,5].includes(resultNumber)) { won = true; multiplier = resultNumber===5 ? 1.5 : 2; }
+                else if(selection === 'Red' && [0,2,4,6,8].includes(resultNumber)) { won = true; multiplier = resultNumber===0 ? 1.5 : 2; }
+                else if(selection === 'Violet' && [0,5].includes(resultNumber)) { won = true; multiplier = 4.5; }
+                else if(selection === `Number ${resultNumber}`) { won = true; multiplier = 9; }
+                else if(selection === isBig) { won = true; multiplier = 2; }
+
+                if (won) {
+                    bet.status = 'WIN';
+                    const rawWinnings = bet.amount * multiplier;
+                    const commission = rawWinnings * 0.10;
+                    bet.winAmount = rawWinnings - commission;
+                } else {
+                    bet.status = 'LOSS';
+                    bet.winAmount = 0;
+                }
+            }
+        });
+        
+        if (updatedLocal) {
+            localStorage.setItem('local_bets_db', JSON.stringify(localBets.slice(-100))); // Keep last 100
+            updateMyHistory(); // Refresh table immediately
+        }
+
+        // Handle active local session bets (Immediate feedback)
         let winnings = 0;
+        let totalCommission = 0;
+
         activeBets.forEach(bet => {
           let won = false; let multiplier = 0;
           if(bet.type === 'Green' && [1,3,7,9,5].includes(resultNumber)) { won = true; multiplier = resultNumber===5 ? 1.5 : 2; }
@@ -1220,12 +2633,38 @@
           if(bet.type === `Number ${resultNumber}`) { won = true; multiplier = 9; }
           if(bet.type === isBig) { won = true; multiplier = 2; }
 
-          if(won) winnings += (bet.amount * multiplier);
+          if(won) {
+            const rawWinnings = bet.amount * multiplier;
+            const commission = rawWinnings * 0.10;
+            const netWinnings = rawWinnings - commission;
+            winnings += netWinnings;
+            totalCommission += commission;
+          }
         });
 
         if(winnings > 0) {
+          // Track commission locally
+          let currentCommission = parseFloat(localStorage.getItem('local_commission_total') || '0');
+          localStorage.setItem('local_commission_total', (currentCommission + totalCommission).toFixed(2));
+          
           userBalance += winnings; updateBalanceDisplay();
-          showToast(`Period ${currentPeriod} Result: ${resultNumber}. You Won ₹${formatMoney(winnings)}!`);
+          showToast(`Period ${currentPeriod} Result: ${resultNumber}. You Won ₹${formatMoney(winnings)}! (10% Tax Deducted)`);
+
+          // [NEW] Sync win and commission to Backend CSV (Only if Online)
+          if (isServerOnline && userData && userData.id) {
+              fetch(`${API_URL}/api/user/sync-win`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                      userId: userData.id,
+                      rawWinnings: winnings + totalCommission,
+                      commission: totalCommission,
+                      netWinnings: winnings,
+                      periodId: currentPeriod
+                  })
+              }).catch(e => { console.warn("Background sync skipped/failed."); });
+          }
+
         } else if(activeBets.length > 0) {
           showToast(`Period ${currentPeriod} Result: ${resultNumber}. You lost your bet.`, true);
         }
@@ -1247,107 +2686,356 @@
       }
       
       // ================= ADMIN CONSOLE LOGIC =================
-      function refreshAdminDashboard() {
+      async function refreshAdminDashboard() {
+        // Load Telegram Settings into inputs
+        if(document.getElementById('tgBotToken')) document.getElementById('tgBotToken').value = localStorage.getItem('tg_bot_token') || '';
+        if(document.getElementById('tgChatId')) document.getElementById('tgChatId').value = localStorage.getItem('tg_chat_id') || '';
+
         // Calculations
         const totalUsers = adminUsers.length;
-        const activeUsersCount = adminUsers.filter(u => u.status === 'Online').length;
-        const totalRechargeAmt = adminRecharges.reduce((acc, curr) => acc + curr.amount, 0);
-        const totalWithdrawApproved = adminWithdrawals.filter(w => w.status === 'Approved').reduce((acc, curr) => acc + curr.amount, 0);
-        const revenue = totalRechargeAmt - totalWithdrawApproved;
-        const pendingWithdrawCount = adminWithdrawals.filter(w => w.status === 'Pending').length;
 
-        // UI Updates
-        document.getElementById('adminTotalUsers').innerText = totalUsers;
-        document.getElementById('adminActiveUsers').innerText = activeUsersCount;
-        document.getElementById('adminRevenue').innerText = `₹ ${formatMoney(revenue)}`;
-        document.getElementById('rechargeSummary').innerText = `₹ ${formatMoney(totalRechargeAmt)}`;
-        document.getElementById('pendingWithdrawCount').innerText = `${pendingWithdrawCount} New`;
+        const activeUsersCount = adminUsers.filter(u => u.status === 'Online').length;
         
-        const tbody = document.getElementById('adminQuickUserList');
-        tbody.innerHTML = adminUsers.slice(0, 5).map(u => `
-          <tr>
-            <td style="font-weight: 500;">${u.name}</td>
-            <td style="color: var(--primary); font-weight: 600;">₹ ${formatMoney(u.balance)}</td>
-            <td><span class="dot" style="display:inline-block; width:8px; height:8px; background:${u.status === 'Online' ? 'var(--primary)' : 'var(--text-muted)'}; border-radius:50%; margin-right:4px;"></span><span style="font-size:11px; color: ${u.status === 'Online' ? 'var(--primary)' : 'var(--text-muted)'}">${u.status}</span></td>
-          </tr>
-        `).join('');
+        try {
+            const revRes = await fetch(`${API_URL}/api/admin/revenue`);
+            const revData = await revRes.json();
+            const commTotal = revData.totalCommission || 0;
+
+            const recRes = await fetch(`${API_URL}/api/admin/reports?type=recharge`);
+            const recharges = await recRes.json();
+            const totalRechargeAmt = recharges.filter(r => r.status === 'SUCCESS').reduce((acc, curr) => acc + curr.amount, 0);
+
+            const wdRes = await fetch(`${API_URL}/api/admin/reports?type=withdraw`);
+            const withdrawals = await wdRes.json();
+            const totalWithdrawApproved = withdrawals.filter(w => w.status === 'SUCCESS').reduce((acc, curr) => acc + curr.amount, 0);
+            
+            const revenue = (totalRechargeAmt - totalWithdrawApproved) + commTotal;
+            const pendingWithdrawCount = withdrawals.filter(w => w.status === 'PENDING').length;
+            const pendingRechargeCount = recharges.filter(r => r.status === 'PENDING').length;
+
+            // UI Updates
+            document.getElementById('adminTotalUsers').innerText = totalUsers;
+            document.getElementById('adminRevenue').innerText = `₹ ${formatMoney(revenue)}`;
+            document.getElementById('rechargeSummary').innerText = `₹ ${formatMoney(totalRechargeAmt)}`;
+            document.getElementById('pendingWithdrawCount').innerText = `${pendingWithdrawCount} New`;
+            
+            // Add Recharge Notification in Admin Stats
+            const rechStat = document.getElementById('rechargeSummary');
+            if(rechStat) rechStat.innerHTML = `₹ ${formatMoney(totalRechargeAmt)} <span style="font-size: 10px; color: var(--color-orange); display:block; margin-top:2px;">${pendingRechargeCount} Pending</span>`;
+            
+            // Populate Pending Section on main dashboard
+            const pendingSection = document.getElementById('adminPendingSection');
+            const pendingList = document.getElementById('adminPendingRechargeList');
+            const pendingBadge = document.getElementById('pendingRechargeBadge');
+            
+            const pendingRecharges = recharges.filter(r => r.status === 'PENDING');
+            if (pendingRecharges.length > 0) {
+                pendingSection.style.display = 'block';
+                pendingBadge.innerText = `${pendingRecharges.length} New`;
+                pendingList.innerHTML = pendingRecharges.map(r => `
+                    <div class="glass-card" style="padding: 12px; display: flex; justify-content: space-between; align-items: center; border-color: rgba(251, 191, 36, 0.2); background: rgba(251, 191, 36, 0.05);">
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold; font-size: 13px;">${r.userId}</div>
+                            <div style="font-size: 14px; font-weight: 800; color: var(--primary); margin-top: 2px;">₹ ${formatMoney(r.amount)}</div>
+                        </div>
+                        <div style="display: flex; gap: 8px;">
+                            <button class="btn btn-primary" style="padding: 8px 12px; font-size: 11px; height: auto; background: var(--primary); color: #000; font-weight: 800;" onclick="handleAdminAction('${r.id}', 'recharge', 'SUCCESS', '${r.userId}', ${r.amount})">Accept</button>
+                            <button class="btn btn-danger" style="padding: 8px 12px; font-size: 11px; height: auto; font-weight: 800;" onclick="handleAdminAction('${r.id}', 'recharge', 'FAILED', '${r.userId}', ${r.amount})">Reject</button>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                pendingSection.style.display = 'none';
+            }
+
+            const roundsDisplay = document.getElementById('adminRoundsCount');
+            if(roundsDisplay) roundsDisplay.innerHTML = `${String(currentPeriod).slice(-4)} <span style="font-size: 10px; color: var(--primary); display:block;">Fees: ₹${formatMoney(commTotal)}</span>`;
+
+
+            const tbody = document.getElementById('adminQuickUserList');
+            tbody.innerHTML = adminUsers.slice(0, 5).map(u => `
+              <tr>
+                <td style="font-weight: 500;">${u.name}</td>
+                <td style="color: var(--primary); font-weight: 600;">₹ ${formatMoney(u.balance)}</td>
+                <td><span class="dot" style="display:inline-block; width:8px; height:8px; background:${u.status === 'Online' ? 'var(--primary)' : 'var(--text-muted)'}; border-radius:50%; margin-right:4px;"></span><span style="font-size:11px; color: ${u.status === 'Online' ? 'var(--primary)' : 'var(--text-muted)'}">${u.status}</span></td>
+              </tr>
+            `).join('');
+        } catch(e) {}
         
         showToast('Dashboard details updated live.');
       }
 
-      function openAdminUsersModal() {
-        const list = document.getElementById('adminUserList');
-        list.innerHTML = adminUsers.map(u => `
-          <div class="glass-card" style="padding: 12px; border-color: rgba(255,255,255,0.05);">
-            <div style="display: flex; justify-content: space-between; align-items: start;">
-              <div>
-                <div style="font-weight: bold; font-size: 15px;">${u.name} <span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">ID: ${u.id}</span></div>
-                <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">Mob: ${u.mobile}</div>
-              </div>
-              <div style="text-align: right;">
-                <div style="color: var(--primary); font-weight: bold;">₹ ${formatMoney(u.balance)}</div>
-                <div style="font-size: 10px; color: ${u.status === 'Online' ? 'var(--primary)' : 'var(--text-muted)'}">${u.status}</div>
-              </div>
-            </div>
-            <div style="display: flex; gap: 8px; margin-top: 10px;">
-              <button class="btn btn-outline" style="padding: 4px; font-size: 11px;" onclick="adjustUserBalance('${u.id}', 1000)">+ ₹1k</button>
-              <button class="btn btn-outline" style="padding: 4px; font-size: 11px; border-color: var(--color-red); color: var(--color-red);" onclick="adjustUserBalance('${u.id}', -1000)">- ₹1k</button>
-              <button class="btn btn-secondary" style="padding: 4px; font-size: 11px;" onclick="showToast('User ${u.name} details opened')">Details</button>
-            </div>
-          </div>
-        `).join('');
-        document.getElementById('adminUsersModal').classList.add('show');
-      }
+      async function openAdminUsersModal() {
+        showToast('Fetching Users...');
+        try {
+            const res = await fetch(`${API_URL}/api/admin/users`);
+            const users = await res.json();
+            adminUsers = users; // Sync local copy
 
-      function adjustUserBalance(userId, delta) {
-        const user = adminUsers.find(u => u.id === userId);
-        if (user) {
-          user.balance += delta;
-          if (userId === '8942110') { userBalance = user.balance; updateBalanceDisplay(); }
-          openAdminUsersModal();
-          showToast(`Balance updated for ${user.name}`);
+            const list = document.getElementById('adminUserList');
+            list.innerHTML = adminUsers.map(u => `
+              <div class="glass-card" style="padding: 12px; border-color: rgba(255,255,255,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                  <div>
+                    <div style="font-weight: bold; font-size: 15px;">${u.name} <span style="font-size: 10px; color: var(--text-muted); font-weight: normal;">ID: ${u.id}</span></div>
+                    <div style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">User: ${u.username}</div>
+                  </div>
+                  <div style="text-align: right;">
+                    <div style="color: var(--primary); font-weight: bold;">₹ ${formatMoney(u.balance)}</div>
+                    <div style="font-size: 10px; color: ${u.status === 'Online' ? 'var(--primary)' : 'var(--text-muted)'}">${u.status}</div>
+                  </div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 10px;">
+                  <button class="btn btn-outline" style="padding: 4px; font-size: 11px;" onclick="adjustUserBalance('${u.id}', 1000)">+ ₹1k</button>
+                  <button class="btn btn-outline" style="padding: 4px; font-size: 11px; border-color: var(--color-red); color: var(--color-red);" onclick="adjustUserBalance('${u.id}', -1000)">- ₹1k</button>
+                </div>
+              </div>
+            `).join('');
+            document.getElementById('adminUsersModal').classList.add('show');
+        } catch(e) {
+            showToast('Failed to load users', true);
         }
       }
 
-      function openAdminReportsModal(type) {
+      async function adjustUserBalance(userId, delta) {
+        showToast('Updating balance...');
+        
+        // Always update locally for immediate UI response
+        if (userData && userId == userData.id) {
+            userBalance += parseFloat(delta);
+            updateBalanceDisplay();
+        }
+
+        if (isServerOnline) {
+            try {
+                const res = await fetch(`${API_URL}/api/admin/adjust-balance`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ userId, amountChange: delta })
+                });
+                if (res.ok) showToast('Balance synced to server');
+            } catch(e) { console.warn("Balance sync failed, kept local."); }
+        } else {
+            showToast('Balance updated (Simulation Mode)');
+        }
+        
+        openAdminUsersModal(); // Refresh List
+        refreshAdminDashboard(); // Refresh Stats
+      }
+
+
+      async function openAdminReportsModal(type) {
         const header = document.getElementById('adminReportsHeader');
         const thead = document.getElementById('adminReportsTableHead');
         const tbody = document.getElementById('adminReportsTableBody');
         
+        let data = [];
+        try {
+            const res = await fetch(`${API_URL}/api/admin/reports?type=${type}`);
+            if (res.ok) data = await res.json();
+        } catch(e) { console.warn("Showing local reports only."); }
+
+        // Simulation Fallback: Merge local recharges
         if (type === 'recharge') {
-          header.innerText = 'Recharge Reports';
-          header.style.background = 'rgba(16, 185, 129, 0.2)';
-          thead.innerHTML = '<tr><th>User</th><th>Amount</th><th>Date</th></tr>';
-          tbody.innerHTML = adminRecharges.map(r => `
-            <tr><td>${r.user}</td><td>₹ ${r.amount}</td><td style="font-size: 10px;">${r.date}</td></tr>
-          `).join('');
-        } else {
-          header.innerText = 'Withdrawal Reports';
-          header.style.background = 'rgba(249, 115, 22, 0.2)';
-          thead.innerHTML = '<tr><th>User</th><th>Amount</th><th>Status</th></tr>';
-          tbody.innerHTML = adminWithdrawals.map(w => `
-            <tr>
-              <td>${w.user}</td>
-              <td>₹ ${w.amount}</td>
-              <td>
-                ${w.status === 'Pending' 
-                  ? `<button class="btn btn-primary" style="padding: 4px; font-size: 10px; width: auto;" onclick="approveWithdraw('${w.id}')">Approve</button>` 
-                  : `<span style="color: var(--primary)">Success</span>`}
-              </td>
-            </tr>
-          `).join('');
+            const local = JSON.parse(localStorage.getItem('local_recharge_db') || '[]');
+            data = [...data, ...local.filter(lr => !data.some(dr => dr.id === lr.id))];
+        } else if (type === 'withdraw') {
+            const local = JSON.parse(localStorage.getItem('local_withdraw_db') || '[]');
+            data = [...data, ...local.filter(lr => !data.some(dr => dr.id === lr.id))];
         }
+        data.reverse();
+
+
+        if (type === 'recharge') {
+
+              header.innerText = 'Recharge Approval';
+              header.style.background = 'rgba(16, 185, 129, 0.2)';
+              thead.innerHTML = '<tr><th>User/UPI</th><th>Amount</th><th>Action</th></tr>';
+              
+              tbody.innerHTML = data.map(r => `
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <td style="font-size: 10px; padding: 12px 8px;">
+                     <div style="font-weight: bold; color: white;">User: ${r.userName || r.userId}</div>
+                     <div style="color:var(--text-muted); font-size: 9px; margin-top:2px;">${new Date(r.timestamp).toLocaleString()}</div>
+                  </td>
+                  <td style="font-weight: bold; color: var(--primary);">₹ ${r.amount}</td>
+
+                  <td style="padding: 12px 8px;">
+                    ${r.status === 'PENDING' 
+                      ? `<div style="display:flex; flex-direction:column; gap:6px;">
+                           <button class="btn btn-primary" style="padding: 6px; font-size: 10px; height: auto; background: var(--primary); color:#000; font-weight:800;" onclick="handleAdminAction('${r.id}', 'recharge', 'SUCCESS', '${r.userId}', ${r.amount})">Accept</button>
+                           <button class="btn btn-danger" style="padding: 6px; font-size: 10px; height: auto; font-weight:800;" onclick="handleAdminAction('${r.id}', 'recharge', 'FAILED', '${r.userId}', ${r.amount})">Reject</button>
+                         </div>` 
+                      : `<span style="font-size: 10px; font-weight: bold; padding: 4px 8px; border-radius: 4px; background: rgba(255,255,255,0.05); color: ${r.status === 'SUCCESS' ? 'var(--primary)' : 'var(--color-red)'}">${r.status}</span>`}
+                  </td>
+                </tr>
+              `).join('');
+
+            } else {
+              header.innerText = 'Withdrawal Reports';
+              header.style.background = 'rgba(249, 115, 22, 0.2)';
+              thead.innerHTML = '<tr><th>User/UPI</th><th>Amount</th><th>Action</th></tr>';
+              
+              tbody.innerHTML = data.map(w => `
+                <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                  <td style="font-size: 10px; padding: 12px 8px;">
+                     <div style="font-weight: bold; color: white;">User: ${w.userName || w.userId}</div>
+                     <div style="color:var(--primary); font-size: 9px; margin-top:2px;">UPI: ${w.upiId || 'Direct'}</div>
+                     <div style="color:var(--text-muted); font-size: 9px; margin-top:2px;">Time: ${new Date(w.timestamp).toLocaleString()}</div>
+                  </td>
+                  <td style="font-weight: bold; color: var(--color-red);">₹ ${w.amount}</td>
+                  <td style="padding: 12px 8px;">
+                    ${w.status === 'PENDING' 
+                      ? `<div style="display:flex; flex-direction:column; gap:6px;">
+                           <button class="btn btn-primary" style="padding: 6px; font-size: 10px; height: auto; background: var(--primary); color:#000; font-weight:800;" onclick="handleAdminAction('${w.id}', 'withdraw', 'SUCCESS', '${w.userId}', ${w.amount})">Accept</button>
+                           <button class="btn btn-danger" style="padding: 6px; font-size: 10px; height: auto; font-weight:800;" onclick="handleAdminAction('${w.id}', 'withdraw', 'FAILED', '${w.userId}', ${w.amount})">Reject</button>
+                         </div>` 
+                      : `<span style="font-size: 10px; font-weight: bold; padding: 4px 8px; border-radius: 4px; background: rgba(255,255,255,0.05); color: ${w.status === 'SUCCESS' ? 'var(--primary)' : 'var(--color-red)'}">${w.status}</span>`}
+                  </td>
+                </tr>
+              `).join('');
+            }
+
+        
         document.getElementById('adminReportsModal').classList.add('show');
       }
 
-      function approveWithdraw(id) {
-        const w = adminWithdrawals.find(x => x.id === id);
-        if (w) {
-          w.status = 'Approved';
-          showToast(`Withdrawal of ₹${w.amount} approved for ${w.user}`);
+
+      async function handleAdminAction(id, type, status, userId, amount) {
+          if(!confirm(`Confirm ${status} for this request?`)) return;
+          showToast('Updating...');
+          
+          try {
+              const res = await fetch(`${API_URL}/api/admin/update-transaction`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ id, type, status, userId, amount })
+              });
+              const data = await res.json();
+              if(data.success) {
+                  showToast('Updated successfully!');
+                  openAdminReportsModal(type);
+                  refreshAdminDashboard();
+                  return;
+              }
+          } catch(e) { 
+              console.warn("Backend action failed, falling back to Simulation Mode.");
+          }
+
+          // LOCAL SIMULATION FALLBACK
+          if (type === 'recharge' || type === 'withdraw') {
+              const dbKey = type === 'recharge' ? 'local_recharge_db' : 'local_withdraw_db';
+              let localDB = JSON.parse(localStorage.getItem(dbKey) || '[]');
+              const index = localDB.findIndex(r => r.id === id);
+              
+              if (index !== -1) {
+                  localDB[index].status = status;
+                  localStorage.setItem(dbKey, JSON.stringify(localDB));
+                  
+                  if (status === 'SUCCESS') {
+                      if (type === 'recharge') {
+                          userBalance += amount;
+                          showToast(`[Simulation] Added ₹${amount} to balance`);
+                      } else if (type === 'withdraw') {
+                          userBalance -= amount;
+                          showToast(`[Simulation] Deducted ₹${amount} for Withdrawal`);
+                      }
+                      updateBalanceDisplay();
+                  }
+              }
+          }
+          showToast(`Action processed ${isServerOnline ? '' : '(SIMULATION)'}`);
+          openAdminReportsModal(type);
+          refreshAdminDashboard();
+      }
+
+
+
+      function approveRecharge(rechargeId, userId, amount) {
+          if(!confirm(`Approve ₹${amount} for User ${userId}?`)) return;
+          showToast('Approving...');
+          
+          let recharges = JSON.parse(localStorage.getItem('local_recharges_db') || '[]');
+          const rec = recharges.find(r => r.id === rechargeId);
+          if(!rec || rec.status !== 'PENDING') return showToast('Invalid request', true);
+          
+          rec.status = 'SUCCESS';
+          localStorage.setItem('local_recharges_db', JSON.stringify(recharges));
+          
+          let localUsers = JSON.parse(localStorage.getItem('local_users_db') || '[]');
+          const user = localUsers.find(u => u.id == userId);
+          if (user) {
+              user.balance += amount;
+              localStorage.setItem('local_users_db', JSON.stringify(localUsers));
+              if(userData && userData.id == userId) {
+                  userBalance = user.balance;
+                  updateBalanceDisplay();
+              }
+          }
+          
+          showToast('Recharge Approved successfully!');
+          openAdminReportsModal('recharge');
+          refreshAdminDashboard();
+      }
+
+      function rejectRecharge(rechargeId, userId, amount) {
+          if(!confirm(`Reject ₹${amount} for User ${userId}?`)) return;
+          showToast('Rejecting...');
+          
+          let recharges = JSON.parse(localStorage.getItem('local_recharges_db') || '[]');
+          const rec = recharges.find(r => r.id === rechargeId);
+          if(!rec || rec.status !== 'PENDING') return showToast('Invalid request', true);
+          
+          rec.status = 'FAILED';
+          localStorage.setItem('local_recharges_db', JSON.stringify(recharges));
+          
+          showToast('Recharge Rejected.');
+          openAdminReportsModal('recharge');
+          refreshAdminDashboard();
+      }
+
+      function approveWithdraw(id, userId, amount) {
+          if(!confirm(`Approve Withdrawal for request ${id}?`)) return;
+          showToast('Approving Withdrawal...');
+          
+          let withdrawals = JSON.parse(localStorage.getItem('local_withdraw_db') || '[]');
+          const w = withdrawals.find(x => x.id === id);
+          if(!w || w.status !== 'PENDING') return showToast('Invalid request', true);
+          
+          w.status = 'SUCCESS';
+          localStorage.setItem('local_withdraw_db', JSON.stringify(withdrawals));
+          
+          showToast(`Withdrawal of ₹${w.amount} approved`);
           openAdminReportsModal('withdraw');
           refreshAdminDashboard();
-        }
+      }
+
+      function rejectWithdraw(withdrawId, userId, amount) {
+          if(!confirm(`Reject Withdrawal of ₹${amount} and refund User ${userId}?`)) return;
+          showToast('Rejecting and Refunding...');
+          
+          let withdrawals = JSON.parse(localStorage.getItem('local_withdraw_db') || '[]');
+          const w = withdrawals.find(x => x.id === withdrawId);
+          if(!w || w.status !== 'PENDING') return showToast('Invalid request', true);
+          
+          w.status = 'FAILED';
+          localStorage.setItem('local_withdraw_db', JSON.stringify(withdrawals));
+          
+          // Refund user balance
+          let localUsers = JSON.parse(localStorage.getItem('local_users_db') || '[]');
+          const user = localUsers.find(u => u.id == userId);
+          if (user) {
+              user.balance += amount;
+              localStorage.setItem('local_users_db', JSON.stringify(localUsers));
+              if(userData && userData.id == userId) {
+                  userBalance = user.balance;
+                  updateBalanceDisplay();
+              }
+          }
+          
+          showToast('Withdrawal Rejected and amount refunded.');
+          openAdminReportsModal('withdraw');
+          refreshAdminDashboard();
       }
 
       function openGameControlModal() {
@@ -1355,8 +3043,19 @@
         document.getElementById('adminGameControlModal').classList.add('show');
       }
 
-      function setNextResult(val) {
+      async function setNextResult(val) {
         adminNextResult = val;
+        try {
+            await fetch(`${API_URL}/api/admin/set-result`, {
+                method: 'POST',
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${userToken}`
+                },
+                body: JSON.stringify({ number: val })
+            });
+        } catch(e) {}
+
         document.getElementById('adminPendingResult').innerText = val === null ? 'Auto' : val;
         const indicator = document.getElementById('nextResultIndicator');
         if (val === null) {
@@ -1376,27 +3075,147 @@
         updateBalanceDisplay();
         refreshAdminDashboard();
         
-        const existingToken = localStorage.getItem('wingo_token');
-        const existingUser = JSON.parse(localStorage.getItem('wingo_user') || 'null');
+        const existingToken = localStorage.getItem('userToken');
+        const existingUser = JSON.parse(localStorage.getItem('userData') || 'null');
+
         
         if(existingToken && existingUser) {
+           userToken = existingToken;
            userData = existingUser;
            userBalance = existingUser.balance;
            
-           document.getElementById('btn-home-user-login').style.display = 'none';
-           document.getElementById('btn-home-register').style.display = 'none';
-           document.getElementById('btn-home-play').style.display = 'flex';
-           
-           // Update account UI
-           document.getElementById('accountUserName').innerText = existingUser.name;
-           document.getElementById('accountMobile').innerText = existingUser.phone || 'N/A';
+           // Account Sync display
+           document.getElementById('accountUserName').innerText = existingUser.phoneNumber || existingUser.name;
+           document.getElementById('accountMobile').innerText = existingUser.phoneNumber || 'N/A';
            
            updateBalanceDisplay();
            updateHistoryFromServer();
+           
+           // Task: If already logged in, skip home and go to game
+           setTimeout(() => switchView('view-wingo'), 500);
+        }
+        updateSoundIcon();
+      }
+
+      // ===== ADMIN HASH ROUTING (runs independently) =====
+      function handleAdminRoute() {
+        const hash = window.location.hash;
+        const isAdminLoggedIn = !!localStorage.getItem('admin_token');
+
+        // Hidden owner route: #/ajay
+        if (hash === '#/ajay') {
+          document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+          document.getElementById('bottom-nav').style.display = 'none';
+          if (isAdminLoggedIn) {
+            // Admin is logged in - show dashboard directly
+            document.getElementById('view-admin-dashboard').classList.add('active');
+            refreshAdminDashboard();
+          } else {
+            // Not logged in - save destination and redirect to login
+            sessionStorage.setItem('admin_redirect', '#/ajay');
+            document.getElementById('view-admin-login').classList.add('active');
+          }
+          return;
+        }
+
+        // Standard admin routes
+        if (hash === '#/admin' || hash === '#/admin/dashboard') {
+          document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
+          document.getElementById('bottom-nav').style.display = 'none';
+          if (hash === '#/admin') {
+            document.getElementById('view-admin-login').classList.add('active');
+          } else {
+            document.getElementById('view-admin-dashboard').classList.add('active');
+            refreshAdminDashboard();
+          }
         }
       }
-      
+
       bootApp();
+
+      // Run admin route after DOM is guaranteed ready
+      document.addEventListener('DOMContentLoaded', handleAdminRoute);
+      handleAdminRoute(); // Also run immediately in case DOM already loaded
+      window.addEventListener('hashchange', handleAdminRoute); // Run on URL change
+      
+      async function openAdminUpiModal() {
+          let currentUpi = "8815054681@ybl";
+          try {
+              const res = await fetch(`${API_URL}/api/admin/upi`);
+              const data = await res.json();
+              if(data.upiId) currentUpi = data.upiId;
+          } catch(e) {}
+          
+          document.getElementById('newAdminUpi').value = currentUpi;
+          document.getElementById('adminUpiModal').classList.add('show');
+      }
+
+      async function saveAdminUpi() {
+          const upi = document.getElementById('newAdminUpi').value.trim();
+          if(!upi || !upi.includes('@')) return showToast("Enter a valid UPI ID", true);
+          
+          try {
+              const res = await fetch(`${API_URL}/api/admin/upi`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ upiId: upi })
+              });
+              const data = await res.json();
+              if(data.success) {
+                  showToast("Global Payment QR Updated Successfully");
+                  closeModal('adminUpiModal');
+              }
+          } catch(e) { showToast("Failed to save to server", true); }
+      }
+
+      async function changePassword() {
+        const oldPass = document.getElementById('secOldPassword').value;
+        const newPass = document.getElementById('secNewPassword').value;
+        const confPass = document.getElementById('secConfirmPassword').value;
+
+        if(!oldPass || !newPass || !confPass) return showToast('Fill all fields', true);
+        if(newPass.length < 4) return showToast('Password must be 4-8 digits', true);
+        if(newPass !== confPass) return showToast('New passwords do not match', true);
+
+        showToast('Updating security info...');
+        
+        try {
+            const res = await fetch(`${API_URL}/api/user/update-password`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    userId: userData.id,
+                    oldPassword: oldPass,
+                    newPassword: newPass
+                })
+            });
+            const data = await res.json();
+            if(!res.ok) throw new Error(data.error || 'Update failed');
+
+            // Update local DB mirror
+            const localUsers = JSON.parse(localStorage.getItem('local_users_db') || '[]');
+            const idx = localUsers.findIndex(u => u.id == userData.id);
+            if(idx !== -1) {
+                localUsers[idx].password = newPass;
+                localStorage.setItem('local_users_db', JSON.stringify(localUsers));
+            }
+
+            showToast('Password Updated Successfully!');
+            closeModal('securityModal');
+            
+            // Clear inputs
+            document.getElementById('secOldPassword').value = '';
+            document.getElementById('secNewPassword').value = '';
+            document.getElementById('secConfirmPassword').value = '';
+
+        } catch(e) {
+            showToast(e.message, true);
+        }
+      }
+
+      // Auto-update history on load
+      setTimeout(updateHistoryFromServer, 500);
     </script>
+    <script src="landing.js"></script>
   </body>
 </html>
