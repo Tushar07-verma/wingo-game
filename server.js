@@ -2,6 +2,7 @@ const express = require('express');
 const cors = require('cors');
 const fs = require('fs');
 const path = require('path');
+const compression = require('compression');
 
 // Crash Logger - Writes errors to error_log.txt if the server fails to start
 process.on('uncaughtException', (err) => {
@@ -26,6 +27,7 @@ const io = require('socket.io')(http, {
 const PORT = process.env.PORT || 5555;
 
 // Middleware
+app.use(compression()); // Compress all responses for fast loading
 // Middleware - Explicitly permissive CORS for all local environments
 app.use(cors({
     origin: '*',
